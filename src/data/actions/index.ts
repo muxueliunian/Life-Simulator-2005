@@ -11,6 +11,12 @@ import type { GameAction } from '../../types'
  * - has-business：有自己的小生意（解锁扩张、转让）
  * - employed / side-gig：有工作/兼职
  * - own-house / best-friend：买了房 / 有挚友
+ * - retired：60 岁退休（由引擎年度结算写入）
+ * - health-chronic：慢性病（events/health.ts）
+ * - has-foundation：成立了基金会（每年自然获得影响力）
+ * - skill-japanese：会日语（AI 公司在日本注册更顺利）
+ * - ai-candidate / ai-company：想做 / 拥有 AI 公司（主线见 events/ai-mainline.ts）
+ * - kid-close：和孩子亲近（亲人线见 events/family.ts）
  */
 const modules = import.meta.glob<Record<string, unknown>>(['./*.ts', '!./index.ts'], { eager: true })
 

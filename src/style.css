@@ -135,3 +135,34 @@ body { margin:0; background:var(--bg); color:var(--fg); font-family: system-ui, 
   .draw .card-n { font-size:15px; }
   .draw .card-d { font-size:12px; line-height:1.4; }
 }
+
+/* 结局六维 */
+.dims { width: 100%; max-width: 420px; margin: 12px auto; display: grid; gap: 6px; }
+.dim { display: grid; grid-template-columns: 4em 1fr 2.5em; align-items: center; gap: 8px; font-size: 14px; }
+.dim-bar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.dim-bar i { display: block; height: 100%; background: var(--gold); }
+.dim b { text-align: right; }
+
+/* 世界线面板 */
+.overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+.overlay-box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto; padding: 16px; position: relative; }
+.overlay-box > .btn.small { position: absolute; top: 12px; right: 12px; }
+.overlay-box h3 { margin: 0 0 8px; padding-right: 64px; }
+.wl-row { border-left: 3px solid var(--line); padding: 4px 0 4px 10px; margin: 8px 0; }
+.wl-row.changed { border-left-color: var(--gold); }
+.wl-row p { margin: 2px 0; font-size: 14px; }
+.wl-row .mine { color: var(--gold); }
+/* 结局报纸 */
+.paper { width: 100%; max-width: 420px; margin: 12px auto; background: #f3ecd8; color: #2a2418; border-radius: 6px; padding: 12px 16px; text-align: left; }
+.paper-head { font-weight: bold; font-size: 18px; border-bottom: 2px solid #2a2418; padding-bottom: 6px; margin-bottom: 8px; text-align: center; letter-spacing: 2px; }
+.paper p { margin: 6px 0; font-size: 14px; line-height: 1.5; }
+
+/* 预知答题 */
+.quiz .choice.out { opacity:.35; text-decoration:line-through; cursor:not-allowed; transform:none; }
+.quiz .choice.flash { border-color:var(--gold); box-shadow:0 0 12px var(--gold); animation:flash 1.2s ease-in-out infinite alternate; }
+@keyframes flash { from { box-shadow:0 0 4px var(--gold); } to { box-shadow:0 0 16px var(--gold); } }
+
+/* 侧栏：家人 */
+.family { margin-top:10px; font-size:13px; color:var(--muted); }
+.family p { margin:2px 0; }
+@media (max-width: 720px) { .family { margin-top:4px; font-size:11px; display:flex; flex-wrap:wrap; gap:0 10px; } }
