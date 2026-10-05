@@ -84,8 +84,8 @@ export const earlyYearsEvents: GameEvent[] = [
         requires: { flags: ['parents-trust'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '爸妈被你的严肃吓了一跳，最后真没进场。之后股市一路阴跌，同事们几乎个个被套，只有你家毫发无伤。', effects: { stats: { wealth: 3, influence: 3 } } },
-          { tag: 'misremember', text: '你把几年后的大牛市记串了年份，反而催他们“快买”。全家的存款就这样站在了山顶上。', effects: { stats: { wealth: -6, happiness: -5 }, addFlags: ['family-stock-trapped'] } },
+          { tag: 'success', text: '爸妈被你的严肃吓了一跳，最后真没进场。之后股市一路阴跌，同事们几乎个个被套，只有你家毫发无伤。', effects: { stats: { influence: 3 } } },
+          { tag: 'misremember', text: '你把几年后的大牛市记串了年份，反而催他们“快买”。全家的存款就这样站在了山顶上。', effects: { stats: { happiness: -5 }, buy: { asset: 'ashare', at: 2200, ratio: 0.3 }, addFlags: ['family-stock-trapped'] } },
         ],
       },
       {
@@ -93,15 +93,15 @@ export const earlyYearsEvents: GameEvent[] = [
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '爸妈拗不过你，半开玩笑地清了仓。几个月后周围的人都在割肉，你家却多出一笔能周转的现金。', effects: { stats: { wealth: 12, influence: 3 } } },
-          { tag: 'misremember', text: '你记错了月份，喊得太早。爸妈卖完眼看着又涨了一段，忍不住追了回去，正好追在最高点。', effects: { stats: { wealth: -10, happiness: -5 }, addFlags: ['family-stock-trapped'] } },
+          { tag: 'success', text: '爸妈拗不过你，半开玩笑地清了仓。几个月后周围的人都在割肉，你家却多出一笔能周转的现金。', effects: { stats: { influence: 3 }, wealthRatio: 0.05 } },
+          { tag: 'misremember', text: '你记错了月份，喊得太早。爸妈卖完眼看着又涨了一段，忍不住追了回去，正好追在最高点。', effects: { stats: { happiness: -5 }, buy: { asset: 'ashare', at: 2245, ratio: 0.4 }, addFlags: ['family-stock-trapped'] } },
         ],
       },
       {
         text: '你才三岁，回去睡觉',
         outcomes: [
           { weight: 2, text: '爸妈商量到半夜，最后还是觉得存银行踏实。', effects: {} },
-          { weight: 1, text: '第二天，爸妈把一部分存款搬进了股市。你看着他们兴奋的脸，没敢吭声。', effects: { stats: { wealth: -4, happiness: -2 }, addFlags: ['family-stock-trapped'] } },
+          { weight: 1, text: '第二天，爸妈把一部分存款搬进了股市。你看着他们兴奋的脸，没敢吭声。', effects: { stats: { happiness: -2 }, buy: { asset: 'ashare', at: 2200, ratio: 0.15 }, addFlags: ['family-stock-trapped'] } },
         ],
       },
     ],
@@ -142,7 +142,7 @@ export const earlyYearsEvents: GameEvent[] = [
         requires: { flags: ['parents-trust'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '爸爸照着填了，同事们笑他扫兴。一个月后，他成了全单位唯一猜中的人，捧回了奖品和一点奖金。', effects: { stats: { wealth: 1, influence: 2, fame: 1 } } },
+          { tag: 'success', text: '爸爸照着填了，同事们笑他扫兴。一个月后，他成了全单位唯一猜中的人，捧回了奖品和一点奖金。', effects: { stats: { wealth: 0.1, influence: 2, fame: 1 } } },
           { tag: 'misremember', text: '你把决赛记成了另一届，说冠军是德国。爸爸的竞猜单作废，还被同事调侃“听孩子的”。', effects: { stats: { happiness: -2 } } },
         ],
       },
@@ -150,9 +150,10 @@ export const earlyYearsEvents: GameEvent[] = [
         text: '让爸爸和生意伙伴赌一把巴西夺冠',
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
+        stake: { max: 50 },
         outcomes: [
-          { tag: 'success', text: '爸爸半信半疑地押了巴西。决赛巴西 2:0 胜德国，那几个生意伙伴从此对你家刮目相看。', effects: { stats: { wealth: 8, influence: 3 } } },
-          { tag: 'misremember', text: '你记错了巴西走到哪一轮，让爸爸押了别的队。输掉的钱够买一台大彩电。', effects: { stats: { wealth: -6, happiness: -3 } } },
+          { tag: 'success', text: '爸爸半信半疑地押了巴西。决赛巴西 2:0 胜德国，那几个生意伙伴从此对你家刮目相看。', effects: { ret: 3, stats: { influence: 3 } } },
+          { tag: 'misremember', text: '你记错了巴西走到哪一轮，让爸爸押了别的队，押上的钱全输了。', effects: { ret: -1, stats: { happiness: -3 } } },
         ],
       },
       { text: '陪爸爸看国足的比赛', outcomes: [{ text: '三场全败，一球未进。爸爸看完最后一场，默默关了电视。', effects: { stats: { happiness: -2 } } }] },
@@ -270,18 +271,20 @@ export const earlyYearsEvents: GameEvent[] = [
         text: '认真地对爸妈说：“现在买，放着别动。”',
         requires: { flags: ['parents-trust'] },
         usesMemory: true,
+        stake: { max: 50 },
         outcomes: [
-          { tag: 'success', text: '爸妈拿出一小笔钱买了几只股票，然后照你说的“忘了它”。到了年底，账户已经悄悄翻红。', effects: { stats: { wealth: 3, influence: 3 }, addFlags: ['family-stock-2005'] } },
-          { tag: 'misremember', text: '你记错了见底的月份，让爸妈抄底抄早了，结果又跌了一截。他们开始怀疑你只是运气好。', effects: { stats: { wealth: -2, happiness: -2 } } },
+          { tag: 'success', text: '爸妈拿出一笔钱买了几只股票，然后照你说的“忘了它”。到了年底，账户已经悄悄翻红。', effects: { stats: { influence: 3 }, buy: { asset: 'ashare', at: 1000 }, addFlags: ['family-stock-2005'] } },
+          { tag: 'misremember', text: '你记错了见底的月份，让爸妈抄底抄早了，结果又跌了一截，爸妈没扛住割了肉。他们开始怀疑你只是运气好。', effects: { ret: -0.2, stats: { happiness: -2 } } },
         ],
       },
       {
         text: '让爸妈把生意上的闲钱分一部分进股市',
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
+        stake: { max: 300 },
         outcomes: [
-          { tag: 'success', text: '爸妈在一片哀嚎声里悄悄建了仓。年底一算，已经小赚一笔，而你知道这只是开始。', effects: { stats: { wealth: 10, influence: 3 }, addFlags: ['family-stock-2005'] } },
-          { tag: 'misremember', text: '你把板块记错了，爸妈买进的几只股票在别人都回暖时还在往下掉。', effects: { stats: { wealth: -6, happiness: -3 } } },
+          { tag: 'success', text: '爸妈在一片哀嚎声里悄悄建了仓。年底一算，已经小赚一笔，而你知道这只是开始。', effects: { stats: { influence: 3 }, buy: { asset: 'ashare', at: 1000 }, addFlags: ['family-stock-2005'] } },
+          { tag: 'misremember', text: '你把板块记错了，爸妈买进的几只股票在别人都回暖时还在往下掉，最后亏着卖了。', effects: { ret: -0.25, stats: { happiness: -3 } } },
         ],
       },
       {
@@ -289,8 +292,8 @@ export const earlyYearsEvents: GameEvent[] = [
         requires: { flags: ['family-stock-trapped'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '爸爸咬着牙没割肉。到了年底行情开始回暖，他第一次觉得那几年没白熬。', effects: { stats: { wealth: 3, happiness: 5 }, removeFlags: ['family-stock-trapped'], addFlags: ['family-stock-2005'] } },
-          { tag: 'misremember', text: '你话说得颠三倒四，爸爸以为你是让他“赶紧走”，在最低点割了肉。后来说起这事，他总是一脸苦笑。', effects: { stats: { wealth: -4, happiness: -4 }, removeFlags: ['family-stock-trapped'] } },
+          { tag: 'success', text: '爸爸咬着牙没割肉。到了年底行情开始回暖，他第一次觉得那几年没白熬。', effects: { stats: { happiness: 5 }, removeFlags: ['family-stock-trapped'], addFlags: ['family-stock-2005'] } },
+          { tag: 'misremember', text: '你话说得颠三倒四，爸爸以为你是让他“赶紧走”，在最低点割了肉。后来说起这事，他总是一脸苦笑。', effects: { stats: { happiness: -4 }, sell: { asset: 'ashare', at: 1000 }, removeFlags: ['family-stock-trapped'] } },
         ],
       },
       { text: '你沉迷于新买的溜溜球', outcomes: [{ text: '大人们聊股票的时候，你在院子里把溜溜球甩得飞起。', effects: { stats: { happiness: 2 } } }] },

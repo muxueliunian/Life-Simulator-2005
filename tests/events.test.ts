@@ -4,6 +4,7 @@ import { ALL_ACTIONS } from '../src/data/actions'
 import { ALL_EVENTS } from '../src/data/events'
 import { EXTRA_CHOICES } from '../src/data/extra-choices'
 import { HEADLINES } from '../src/data/headlines'
+import { MARKETS } from '../src/data/markets'
 import { QUIZZES } from '../src/data/quizzes'
 import { WORLD_VARS } from '../src/data/world'
 import type { Choice, Condition } from '../src/types'
@@ -224,5 +225,57 @@ describe('预知题库（P2）', () => {
   it('题库里没有真名', () => {
     const blob = JSON.stringify(QUIZZES)
     for (const w of [...FORBIDDEN, ...namingForbidden()]) expect(blob.includes(w), `出现未改名的词：${w}`).toBe(false)
+  })
+})
+
+describe('投入与持仓（数据）', () => {
+  const all: { id: string; c: Choice }[] = [
+    ...ALL_EVENTS.flatMap((e) => (e.choices ?? []).map((c) => ({ id: e.id, c }))),
+    ...ALL_ACTIONS.map((a) => ({ id: a.id, c: a as Choice })),
+  ]
+  const assets = new Set(MARKETS.map((m) => m.id))
+
+  it('买卖、持仓条件引用的资产都存在于 src/data/markets.ts', () => {
+    const used: string[] = []
+    const fromCond = (c?: Condition) => [...(c?.holding ?? []), ...(c?.notHolding ?? [])]
+    for (const { c } of all) {
+      used.push(...fromCond(c.requires))
+      for (const o of c.outcomes) {
+        used.push(...fromCond(o.requires))
+        if (o.effects?.buy) used.push(o.effects.buy.asset)
+        if (o.effects?.sell) used.push(o.effects.sell.asset)
+      }
+    }
+    for (const a of used) expect(assets.has(a), `未登记的资产：${a}`).toBe(true)
+  })
+
+  it('按投入结算的结果（ret、不带 ratio 的 buy）只出现在带 stake 的选项里；带 stake 的选项每个结果都要用到投入', () => {
+    for (const { id, c } of all) {
+      for (const o of c.outcomes) {
+        const usesStake = o.effects?.ret !== undefined || (o.effects?.buy && o.effects.buy.ratio === undefined)
+        expect(!!usesStake, `${id}「${c.text}」：${c.stake ? '有 stake 但结果没用到投入' : 'ret/buy 需要 stake'}`).toBe(!!c.stake)
+      }
+    }
+  })
+
+  it('价格表：年份连续、价格为正', () => {
+    for (const m of MARKETS) {
+      const years = Object.keys(m.prices).map(Number).sort((a, b) => a - b)
+      years.forEach((y, i) => { if (i) expect(y - years[i - 1], `${m.id} ${y}`).toBe(1) })
+      for (const p of Object.values(m.prices)) expect(p).toBeGreaterThan(0)
+    }
+  })
+})
+
+describe('人生路线', () => {
+  it('全职创办 AI 公司（离开校园）时清掉在读大学和上班的标记，不再触发毕业、宿舍等大学线事件', () => {
+    const outs = [
+      ...ALL_EVENTS.flatMap((e) => (e.choices ?? []).flatMap((c) => c.outcomes)),
+      ...ALL_ACTIONS.flatMap((a) => a.outcomes),
+    ]
+    for (const o of outs) {
+      if (!o.effects?.addFlags?.includes('ai-company')) continue
+      expect(o.effects.removeFlags, o.text).toEqual(expect.arrayContaining(['y1620-in-college', 'employed']))
+    }
   })
 })

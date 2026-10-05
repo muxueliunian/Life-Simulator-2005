@@ -165,14 +165,15 @@ export const y2016to2020Events: GameEvent[] = [
     requires: { minAge: 18 },
     title: '川建国当选',
     text: '十一月，美国大选。宿舍里的室友们都在看直播，几乎所有媒体都预测另一位候选人会赢。你躺在床上淡定地说：“地产商会赢。”',
+    variants: [{ requires: { notFlags: ['y1620-in-college'] }, text: '十一月，美国大选。朋友们都在群里转直播，几乎所有媒体都预测另一位候选人会赢。你淡定地回了一句：“地产商会赢。”' }],
     realFact: '2016 年 11 月 8 日美国总统选举，共和党候选人在多数民调不被看好的情况下赢得选举人票多数当选。依据：美国联邦选举结果。政治人物按 docs/NAMING.md 使用外号。',
     choices: [
       {
-        text: '和室友赌一个月的早饭',
+        text: '和朋友们赌一个月的早饭',
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '开票到凌晨，形势逆转。室友们看着你，像看一个算命先生。这个月你的早饭顿顿有鸡蛋。', effects: { stats: { fame: 2, happiness: 4, wealth: 0.03 } } },
-          { tag: 'misremember', text: '你脑子一抽说成了另一位候选人赢，被室友笑到毕业。', effects: { stats: { happiness: -2, wealth: -0.03 } } },
+          { tag: 'success', text: '开票到凌晨，形势逆转。朋友们看着你，像看一个算命先生。这个月你的早饭顿顿有鸡蛋。', effects: { stats: { fame: 2, happiness: 4, wealth: 0.03 } } },
+          { tag: 'misremember', text: '你脑子一抽说成了另一位候选人赢，被朋友们笑了好几年。', effects: { stats: { happiness: -2, wealth: -0.03 } } },
         ],
       },
       { text: '不关心，去图书馆', outcomes: [{ text: '图书馆里人很少，你看完了一本很厚的书。', effects: { stats: { intelligence: 2 } } }] },
@@ -189,30 +190,27 @@ export const y2016to2020Events: GameEvent[] = [
     requires: { minAge: 19 },
     title: '本子最后一页',
     text: '比特币一路涨到了一万多美元，宿舍里人人都在谈“币圈”。你翻开初中时的本子，最后一页那串抄下来的字符还在。',
+    variants: [{ requires: { notFlags: ['y1620-in-college'] }, text: '比特币一路涨到了一万多美元，身边人人都在谈“币圈”。你翻开初中时的本子，最后一页那串抄下来的字符还在。' }],
     realFact: '2017 年比特币价格从年初约 1000 美元涨至 12 月中旬接近 20000 美元，随后大幅回落。依据：通行加密货币市场史料。',
     choices: [
       {
-        text: '在年底最高点附近卖掉',
-        requires: { flags: ['y1115-btc-hodl'] },
+        text: '在年底最高点附近，把手里的币全部卖掉',
+        requires: { holding: ['btc'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '你在接近两万美元时卖掉了。当年一千块的压岁钱，变成了一笔够你读完大学的钱。', effects: { stats: { wealth: 2, happiness: 6, influence: 1 }, removeFlags: ['y1115-btc-hodl'] } },
-          { tag: 'misremember', text: '你记错了高点的日子，等你想卖时已经跌了三成。不过比起当年，还是翻了很多倍。', effects: { stats: { wealth: 1, happiness: 2 }, removeFlags: ['y1115-btc-hodl'] } },
+          { tag: 'success', text: '你在接近两万美元时卖掉了。挂掉交易软件的那一刻，你在阳台上站了很久。', effects: { stats: { happiness: 6, influence: 1 }, sell: { asset: 'btc', at: 19000 }, removeFlags: ['y1115-btc-hodl', 'y1115-btc-family'] } },
+          { tag: 'misremember', text: '你记错了高点的日子，等你想卖时已经跌了三成。', effects: { stats: { happiness: 2 }, sell: { asset: 'btc', at: 13000 }, removeFlags: ['y1115-btc-hodl', 'y1115-btc-family'] } },
         ],
       },
       {
-        text: '打电话给爸爸：“那串密码，现在可以用了。”',
-        requires: { flags: ['y1115-btc-family'] },
-        usesMemory: true,
-        outcomes: [
-          { tag: 'success', text: '爸爸翻遍了三个藏密码的地方，在年底前全卖了。他挂了电话后，在阳台上站了很久。', effects: { stats: { wealth: 80, influence: 4, happiness: 6 }, addFlags: ['family-has-money'], removeFlags: ['y1115-btc-family'] } },
-          { tag: 'misremember', text: '你喊卖喊晚了，爸爸卖在了半山腰。不过当年的那笔钱，也已经翻了十几倍。', effects: { stats: { wealth: 40, influence: 2 }, addFlags: ['family-has-money'], removeFlags: ['y1115-btc-family'] } },
-        ],
+        text: '不卖，接着拿到下一轮牛市',
+        requires: { holding: ['btc'] },
+        outcomes: [{ text: '你把本子合上，放回了抽屉最深处。你知道明年会跌掉八成，也知道它还会回来。', effects: { stats: { memory: 1 } } }],
       },
       {
         text: '什么都没有，看着别人发财',
         outcomes: [
-          { weight: 2, text: '你劝室友别在顶部追高，他没听。春节后他每天都在宿舍唉声叹气。', effects: { stats: { charm: 1, intelligence: 1 } } },
+          { weight: 2, text: '你劝朋友别在顶部追高，他没听。春节后他每天都在朋友圈唉声叹气。', effects: { stats: { charm: 1, intelligence: 1 } } },
           { weight: 1, text: '你忍住了没有追，心里有点酸，但知道这是对的。', effects: { stats: { happiness: -1, intelligence: 1 } } },
         ],
       },
@@ -226,22 +224,24 @@ export const y2016to2020Events: GameEvent[] = [
     requires: { minAge: 19 },
     title: '空气币',
     text: '这一年，到处都是“发币”项目：一份白皮书，几个人，就能募到几千万。学长拉你加入一个项目团队，说“毕业前财务自由”。你记得，九月会有一纸禁令。',
+    variants: [{ requires: { notFlags: ['y1620-in-college'] }, text: '这一年，到处都是“发币”项目：一份白皮书，几个人，就能募到几千万。一个老同学拉你加入他的项目团队，说“一年财务自由”。你记得，九月会有一纸禁令。' }],
     realFact: '2017 年 9 月 4 日，国内多部门联合发布公告，将代币发行融资（ICO）定性为未经批准的非法公开融资行为并全面叫停。依据：相关部门公开公告。',
     choices: [
       {
-        text: '劝学长：“九月之前收手，把钱退给大家。”',
+        text: '劝他：“九月之前收手，把钱退给大家。”',
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '学长将信将疑地停了项目。禁令出来那天，他给你发了一条很长的消息，最后一句是“谢谢”。', effects: { stats: { influence: 3, charm: 2 } } },
-          { tag: 'misremember', text: '你把时间记成了年底，学长又多募了一轮，最后退款退得焦头烂额，还埋怨你。', effects: { stats: { happiness: -3, charm: -1 } } },
+          { tag: 'success', text: '他将信将疑地停了项目。禁令出来那天，他给你发了一条很长的消息，最后一句是“谢谢”。', effects: { stats: { influence: 3, charm: 2 } } },
+          { tag: 'misremember', text: '你把时间记成了年底，他又多募了一轮，最后退款退得焦头烂额，还埋怨你。', effects: { stats: { happiness: -3, charm: -1 } } },
         ],
       },
       {
-        text: '在校园论坛写一篇《空气币十问》',
+        text: '在网上写一篇《空气币十问》',
         requires: { statMin: { intelligence: 55 } },
-        outcomes: [{ text: '文章被转到了好几个高校的论坛，很多同学因此没有掏钱。禁令出来后，有人专门来找你道谢。', effects: { stats: { fame: 4, influence: 2, intelligence: 1 } } }],
+        outcomes: [{ text: '文章被转到了好几个论坛，很多人因此没有掏钱。禁令出来后，有人专门来找你道谢。', effects: { stats: { fame: 4, influence: 2, intelligence: 1 } } }],
       },
-      { text: '不掺和，上课去', outcomes: [{ text: '你继续当一个普通的大学生，期末绩点还不错。', effects: { stats: { intelligence: 2 } } }] },
+      { text: '不掺和，上课去', requires: { flags: ['y1620-in-college'] }, outcomes: [{ text: '你继续当一个普通的大学生，期末绩点还不错。', effects: { stats: { intelligence: 2 } } }] },
+      { text: '不掺和，忙自己的事', requires: { notFlags: ['y1620-in-college'] }, outcomes: [{ text: '你把群消息设成了免打扰，专心做手头的事。', effects: { stats: { intelligence: 2 } } }] },
     ],
   },
   {
@@ -251,18 +251,19 @@ export const y2016to2020Events: GameEvent[] = [
     requires: { minAge: 19 },
     title: '彩虹单车',
     text: '校门口一夜之间停满了各种颜色的共享单车，扫码就能骑。各家公司拼命补贴、拼命投车。你记得，很多家撑不过这一年，用户的押金也成了麻烦。',
+    variants: [{ requires: { notFlags: ['y1620-in-college'] }, text: '街边一夜之间停满了各种颜色的共享单车，扫码就能骑。各家公司拼命补贴、拼命投车。你记得，很多家撑不过这一年，用户的押金也成了麻烦。' }],
     realFact: '2016–2017 年国内共享单车行业爆发式增长，数十家企业涌入；2017 年下半年起多家企业相继倒闭，用户押金难退成为社会问题。依据：通行科技与财经史料。',
     choices: [
       {
-        text: '提醒全宿舍：押金能退的赶紧退',
+        text: '提醒身边的人：押金能退的赶紧退',
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '大家退完押金没多久，好几家单车公司就关门了。室友们请你吃了一顿火锅。', effects: { stats: { charm: 2, happiness: 3, wealth: 0.01 } } },
+          { tag: 'success', text: '大家退完押金没多久，好几家单车公司就关门了。朋友们请你吃了一顿火锅。', effects: { stats: { charm: 2, happiness: 3, wealth: 0.01 } } },
           { tag: 'misremember', text: '你把会倒闭的那家记错了，大家退了最稳的那家，留着的那家却跑路了。', effects: { stats: { charm: -1, happiness: -2 } } },
         ],
       },
       {
-        text: '去单车公司做校园运营兼职',
+        text: '去单车公司做运营兼职',
         outcomes: [
           { weight: 2, text: '你每天把乱停的车搬回原位，赚了点钱，也看清了“烧钱换市场”是怎么回事。', effects: { stats: { wealth: 0.3, intelligence: 2, health: 1 } } },
           { weight: 1, text: '干了两个月，公司突然没了，最后一个月的工资也没拿到。', effects: { stats: { happiness: -3 } } },
@@ -280,15 +281,17 @@ export const y2016to2020Events: GameEvent[] = [
     year: 2018,
     requires: { minAge: 20 },
     title: '俄罗斯世界杯',
+    variants: [{ requires: { notFlags: ['y1620-in-college'] }, text: '俄罗斯世界杯，楼下的大排档每晚都有人尖叫。决赛是法国对克罗地亚，很多人被克罗地亚的童话打动，想押冷门。你记得那场决赛进了很多球。' }],
     text: '俄罗斯世界杯，宿舍楼里每晚都有人尖叫。决赛是法国对克罗地亚，很多人被克罗地亚的童话打动，想押冷门。你记得那场决赛进了很多球。',
     realFact: '2018 年俄罗斯世界杯决赛于 7 月 15 日在莫斯科举行，法国 4:2 战胜克罗地亚，夺得队史第二座世界杯冠军。依据：国际足联官方赛果。',
     choices: [
       {
         text: '押法国，而且押“总进球数大于 5”（虚拟竞猜）',
         usesMemory: true,
+        stake: { max: 2 },
         outcomes: [
-          { tag: 'success', text: '4:2，六个球。你拿着截图在宿舍里转圈，这一注的赔率让你下个学期的生活费都有了。', effects: { stats: { wealth: 1.5, happiness: 6 } } },
-          { tag: 'misremember', text: '你把这一届和上一届的冠军记串了，押了个寂寞。', effects: { stats: { wealth: -0.5, happiness: -3 } } },
+          { tag: 'success', text: '4:2，六个球。你拿着截图原地转了好几圈，这一注的赔率高得吓人。', effects: { ret: 6, stats: { happiness: 6 } } },
+          { tag: 'misremember', text: '你把这一届和上一届的冠军记串了，押了个寂寞。', effects: { ret: -1, stats: { happiness: -3 } } },
         ],
       },
       { text: '纯粹看球，为童话鼓掌', outcomes: [{ text: '克罗地亚输了，但你记住了他们拼到最后一秒的样子。', effects: { stats: { happiness: 3 } } }] },
@@ -312,7 +315,13 @@ export const y2016to2020Events: GameEvent[] = [
           { tag: 'misremember', text: '你把关税的时间和范围记得乱七八糟，叔叔按你说的调整，反而错过了几笔好单子。', effects: { stats: { influence: -1, happiness: -2 } } },
         ],
       },
-      { text: '写一篇课程论文分析贸易战', outcomes: [{ text: '你的论文被老师推荐到了学院的刊物上。', effects: { stats: { intelligence: 3, fame: 1 } } }] },
+      {
+        text: '写一篇文章分析贸易战',
+        outcomes: [
+          { requires: { flags: ['y1620-in-college'] }, text: '你把它写成了课程论文，被老师推荐到了学院的刊物上。', effects: { stats: { intelligence: 3, fame: 1 } } },
+          { requires: { notFlags: ['y1620-in-college'] }, text: '文章被几个财经号转载，有人留言说“写得比专家清楚”。', effects: { stats: { intelligence: 3, fame: 1 } } },
+        ],
+      },
     ],
   },
   {
@@ -390,6 +399,7 @@ export const y2016to2020Events: GameEvent[] = [
     requires: { minAge: 21 },
     title: '猪肉自由',
     text: '这一年，猪肉价格一路飙升，食堂的红烧肉越来越小块，网上开始流行“实现猪肉自由”。老家的二舅正犹豫要不要把猪卖了。',
+    variants: [{ requires: { notFlags: ['y1620-in-college'] }, text: '这一年，猪肉价格一路飙升，外卖里的红烧肉越来越小块，网上开始流行“实现猪肉自由”。老家的二舅正犹豫要不要把猪卖了。' }],
     realFact: '2018 年 8 月起国内发生非洲猪瘟疫情，生猪存栏大幅下降，2019 年下半年猪肉价格大幅上涨，部分时段同比涨幅超过一倍。依据：国家统计局与农业农村部公开数据。',
     choices: [
       {
@@ -400,7 +410,7 @@ export const y2016to2020Events: GameEvent[] = [
           { tag: 'misremember', text: '你说得太笃定，二舅一直压着不卖，结果有几头猪病了，亏了一笔。', effects: { stats: { happiness: -3 } } },
         ],
       },
-      { text: '在宿舍组织一场“猪肉自由”火锅局', outcomes: [{ text: '大家凑钱买了两斤五花肉，吃出了满汉全席的仪式感。', effects: { stats: { happiness: 4, charm: 1 } } }] },
+      { text: '约上朋友组织一场“猪肉自由”火锅局', outcomes: [{ text: '大家凑钱买了两斤五花肉，吃出了满汉全席的仪式感。', effects: { stats: { happiness: 4, charm: 1 } } }] },
     ],
   },
   {
@@ -477,21 +487,21 @@ export const y2016to2020Events: GameEvent[] = [
     realFact: '2020 年 3 月 9 日、12 日、16 日、18 日美股四次触发市场熔断；美联储随后将利率降至接近零并推出大规模资产购买计划，美股于当年下半年创出新高。依据：通行财经史料。',
     choices: [
       {
-        text: '用全部积蓄在低点抄底美股指数',
-        requires: { statMin: { wealth: 10 } },
+        text: '用积蓄在低点抄底美股指数',
         usesMemory: true,
+        stake: { max: 2000 },
         outcomes: [
-          { tag: 'success', text: '你在三月下旬买入，到年底账户涨了六七成。你第一次体会到“危机就是机会”这句话的分量。', effects: { stats: { wealth: 15, intelligence: 2, influence: 1 } } },
-          { tag: 'misremember', text: '你抄底抄在了半山腰，又被吓得割了一次。好在后来又追了回去，算下来小亏。', effects: { stats: { wealth: -3, happiness: -3 } } },
+          { tag: 'success', text: '你在三月下旬买入，到年底账户涨了六成多。你第一次体会到“危机就是机会”这句话的分量。', effects: { ret: 0.6, stats: { intelligence: 2, influence: 1 } } },
+          { tag: 'misremember', text: '你抄底抄在了半山腰，又被吓得割了一次。好在后来又追了回去，算下来小亏。', effects: { ret: -0.1, stats: { happiness: -3 } } },
         ],
       },
       {
         text: '买入马丝氪的特丝啦，并且拿住',
-        requires: { statMin: { wealth: 5 } },
         usesMemory: true,
+        stake: { max: 500 },
         outcomes: [
-          { tag: 'success', text: '你在低位买入了特丝啦。到年底，它涨了好几倍，你的室友开始叫你“马丝氪的远房亲戚”。', effects: { stats: { wealth: 20, happiness: 5 }, addFlags: ['y1620-tsla'] } },
-          { tag: 'misremember', text: '你记成了明年才开始涨，买得太晚，只吃到了尾巴。', effects: { stats: { wealth: 2, happiness: -1 } } },
+          { tag: 'success', text: '你在低位买入了特丝啦。到年底，它涨了好几倍，你的室友开始叫你“马丝氪的远房亲戚”。', effects: { ret: 5, stats: { happiness: 5 }, addFlags: ['y1620-tsla'] } },
+          { tag: 'misremember', text: '你记成了明年才开始涨，买得太晚，只吃到了尾巴。', effects: { ret: 0.3, stats: { happiness: -1 } } },
         ],
       },
       { text: '我没钱，看看热闹', outcomes: [{ text: '你盯着屏幕上一片红色——美股里红色代表跌——觉得这个世界有点魔幻。', effects: { stats: { happiness: 1, intelligence: 1 } } }] },
@@ -584,7 +594,7 @@ export const y2016to2020Events: GameEvent[] = [
   {
     id: 'y1620-college-loan',
     category: 'life',
-    requires: { minAge: 18, maxAge: 20, minYear: 2016, maxYear: 2017 },
+    requires: { minAge: 18, maxAge: 20, minYear: 2016, maxYear: 2017, flags: ['y1620-in-college'] },
     title: '校园贷',
     text: '宿舍楼下贴着小广告：“凭学生证，三分钟放款，零门槛。”隔壁宿舍有人已经借了好几家，用来买新手机。',
     choices: [
@@ -690,7 +700,7 @@ export const y2016to2020Events: GameEvent[] = [
       {
         text: '休学，全职做',
         outcomes: [
-          { weight: 1, text: '你拿到了投资，小程序从一个学校扩展到了几十个学校。你成了媒体口中的“学生创业明星”。', effects: { stats: { wealth: 30, fame: 6, influence: 4 }, addFlags: ['has-business'] } },
+          { weight: 1, text: '你拿到了投资，小程序从一个学校扩展到了几十个学校。你成了媒体口中的“学生创业明星”。', effects: { stats: { wealth: 30, fame: 6, influence: 4 }, addFlags: ['has-business'], removeFlags: ['y1620-in-college'] } },
           { weight: 2, text: '扩张比想象中难得多，一年后钱烧完了。你回学校复了学，身上多了一些别人没有的东西。', effects: { stats: { intelligence: 4, happiness: -4, charm: 2 } } },
         ],
       },
@@ -722,7 +732,7 @@ export const y2016to2020Events: GameEvent[] = [
   {
     id: 'y1620-life-mobile-game',
     category: 'life',
-    requires: { minAge: 18, maxAge: 22, minYear: 2017 },
+    requires: { minAge: 18, maxAge: 22, minYear: 2017, flags: ['y1620-in-college'] },
     title: '王者农药',
     text: '全宿舍、全班、全校都在玩一款叫“王者农药”的手游，连食堂阿姨都会问你“几星了”。室友喊你：“就差一个，快来！”',
     choices: [

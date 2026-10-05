@@ -18,31 +18,34 @@ export const moneyActions: GameAction[] = [
   },
   {
     id: 'act-stock-small', group: 'money', text: '小额炒股', hint: '看运气，也看判断',
-    requires: { minAge: 18, statMin: { wealth: 5 } },
+    requires: { minAge: 18 },
+    stake: { max: 50 },
     outcomes: [
-      { weight: 2, text: '你跟着行情做了几笔，小赚一点。', effects: { stats: { wealth: 4, intelligence: 1 } } },
-      { weight: 2, text: '追涨杀跌，被割了一茬。', effects: { stats: { wealth: -3, happiness: -2 } } },
-      { weight: 1, text: '碰上一只妖股，你小赚了一笔大的。', effects: { stats: { wealth: 15, happiness: 3 } } },
+      { weight: 2, text: '你跟着行情做了几笔，小赚一点。', effects: { ret: 0.15, stats: { intelligence: 1 } } },
+      { weight: 2, text: '追涨杀跌，被割了一茬。', effects: { ret: -0.2, stats: { happiness: -2 } } },
+      { weight: 1, text: '碰上一只妖股，你小赚了一笔大的。', effects: { ret: 0.8, stats: { happiness: 3 } } },
     ],
   },
   {
     id: 'act-stock-memory', group: 'money', text: '凭未来记忆买入“会涨的”', hint: '预知，记忆越清晰越准',
-    requires: { minAge: 18, minYear: 2006, maxYear: 2026, statMin: { wealth: 10 } },
+    requires: { minAge: 18, minYear: 2006, maxYear: 2026 },
     usesMemory: true,
     cooldown: 1,
+    stake: { max: 100 },
     outcomes: [
-      { tag: 'success', text: '你回想起未来的涨幅榜，提前上车，稳稳赚了一笔。', effects: { stats: { wealth: 30, influence: 1 } } },
-      { tag: 'misremember', text: '你把涨幅榜和别的年份记混了，买到一只后来腰斩的股票。', effects: { stats: { wealth: -15, happiness: -4 } } },
+      { tag: 'success', text: '你回想起未来的涨幅榜，提前上车，稳稳赚了一笔。', effects: { ret: 0.4, stats: { influence: 1 } } },
+      { tag: 'misremember', text: '你把涨幅榜和别的年份记混了，买到一只后来腰斩的股票。', effects: { ret: -0.5, stats: { happiness: -4 } } },
     ],
   },
   {
     id: 'act-stock-memory-big', group: 'money', text: '重仓押注“早就知道的行情”', hint: '预知，赌上更多身家',
-    requires: { minAge: 20, minYear: 2006, maxYear: 2026, statMin: { wealth: 200 } },
+    requires: { minAge: 20, minYear: 2006, maxYear: 2026 },
     usesMemory: true,
     cooldown: 2,
+    stake: { min: 50, max: 1000 },
     outcomes: [
-      { tag: 'success', text: '行情完全按你的记忆走，账户数字一路飙升。', effects: { stats: { wealth: 400, fame: 3, influence: 3 } } },
-      { tag: 'misremember', text: '你记错了拐点，满仓被套，亏掉一大截身家。', effects: { stats: { wealth: -200, happiness: -10 } } },
+      { tag: 'success', text: '行情完全按你的记忆走，账户数字一路飙升。', effects: { ret: 1, stats: { fame: 3, influence: 3 } } },
+      { tag: 'misremember', text: '你记错了拐点，满仓被套，亏掉一大截身家。', effects: { ret: -0.6, stats: { happiness: -10 } } },
     ],
   },
   {
@@ -56,10 +59,11 @@ export const moneyActions: GameAction[] = [
   },
   {
     id: 'act-gamble', group: 'money', text: '去赌一把（虚拟游戏币）', hint: '纯看运气，容易上头',
-    requires: { minAge: 18, statMin: { wealth: 5 } },
+    requires: { minAge: 18 },
+    stake: { max: 20 },
     outcomes: [
-      { weight: 3, text: '你输光了带来的筹码，扭头就走。', effects: { stats: { wealth: -5, happiness: -4 } } },
-      { weight: 1, text: '手气爆棚，你小赢了一笔。', effects: { stats: { wealth: 10, happiness: 5 } } },
+      { weight: 3, text: '你输光了带来的筹码，扭头就走。', effects: { ret: -1, stats: { happiness: -4 } } },
+      { weight: 1, text: '手气爆棚，你小赢了一笔。', effects: { ret: 2, stats: { happiness: 5 } } },
     ],
   },
   {

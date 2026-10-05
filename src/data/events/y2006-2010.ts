@@ -5,7 +5,8 @@ import type { GameEvent } from '../../types'
  *
  * 本文件读取的标记：
  * - parents-trust / family-has-money：父母代理资格（见 early-years.ts）
- * - family-stock-2005：2005 年在底部入市（来自 early-years.ts）
+ * 炒股选项用“投入 + 持仓”结算（Choice.stake、Effects.buy/sell，价格见 src/data/markets.ts）：
+ * 买入后每年按真实指数重估，2007 年高点不卖，2008 年的暴跌会自动算到你头上。
  *
  * 本文件写入的标记：
  * - y0610-in-bull：2006 年家里在牛市里持仓
@@ -33,27 +34,29 @@ export const y2006to2010Events: GameEvent[] = [
         text: '拉着爸妈说：“买了就别动，一直拿到明年。”',
         requires: { flags: ['parents-trust'] },
         usesMemory: true,
+        stake: { max: 50 },
         outcomes: [
-          { tag: 'success', text: '爸妈拿出一小笔钱建了仓，账户一个月比一个月红。爸爸开始管你叫“小军师”。', effects: { stats: { wealth: 4, influence: 2 }, addFlags: ['y0610-in-bull'] } },
-          { tag: 'misremember', text: '你把牛市开始的月份记错了，爸妈买进去先被洗了一轮，吓得差点清仓。', effects: { stats: { wealth: -2, happiness: -2 } } },
+          { tag: 'success', text: '爸妈拿出一笔钱建了仓，账户一个月比一个月红。爸爸开始管你叫“小军师”。', effects: { stats: { influence: 2 }, buy: { asset: 'ashare' }, addFlags: ['y0610-in-bull'] } },
+          { tag: 'misremember', text: '你把牛市开始的月份记错了，爸妈买进去先被洗了一轮，吓得清了仓。', effects: { ret: -0.1, stats: { happiness: -2 } } },
         ],
       },
       {
         text: '撺掇爸爸把生意上的闲钱分一大块进场',
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
+        stake: { max: 300 },
         outcomes: [
-          { tag: 'success', text: '爸爸半信半疑地加了仓。年底一算，赚的钱够换一辆新车，饭局上人人都想听他“选股心得”。', effects: { stats: { wealth: 25, influence: 3 }, addFlags: ['y0610-in-bull'] } },
-          { tag: 'misremember', text: '你把板块记串了，爸爸买的几只票涨得比别人慢一大截，他怀疑你只是“碰巧说中过”。', effects: { stats: { wealth: -8, happiness: -3 } } },
+          { tag: 'success', text: '爸爸半信半疑地加了仓。到了年底，饭局上人人都想听他的“选股心得”。', effects: { stats: { influence: 3 }, buy: { asset: 'ashare' }, addFlags: ['y0610-in-bull'] } },
+          { tag: 'misremember', text: '你把板块记串了，爸爸买的几只票涨得比大盘慢一大截，年底他就卖了，怀疑你只是“碰巧说中过”。', effects: { ret: 0.3, stats: { happiness: -3 } } },
         ],
       },
       {
-        text: '对爸妈说：“前年买的别卖，还没到时候。”',
-        requires: { flags: ['family-stock-2005'] },
+        text: '对爸妈说：“手里的股票别卖，还没到时候。”',
+        requires: { holding: ['ashare'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '爸妈第一次忍住了没卖，看着账户一路飘红。妈妈说：“你小时候说的‘忘了它’，原来是这个意思。”', effects: { stats: { wealth: 12, influence: 3, happiness: 3 }, addFlags: ['y0610-in-bull'] } },
-          { tag: 'misremember', text: '你话说得太含糊，爸妈涨了一点就落袋为安，后面的大涨一分钱也没吃到。', effects: { stats: { wealth: 2, happiness: -4 } } },
+          { tag: 'success', text: '爸妈第一次忍住了没卖，看着账户一路飘红。妈妈说：“你小时候说的‘忘了它’，原来是这个意思。”', effects: { stats: { influence: 3, happiness: 3 }, addFlags: ['y0610-in-bull'] } },
+          { tag: 'misremember', text: '你话说得太含糊，爸妈涨了一点就落袋为安，后面的大涨一分钱也没吃到。', effects: { stats: { happiness: -4 }, sell: { asset: 'ashare', at: 1400 } } },
         ],
       },
       { text: '趴在茶几上写作业，听大人们聊股票', outcomes: [{ text: '你把“K线”“涨停”两个词记进了作文里，被老师批了个“少儿不宜”。', effects: { stats: { intelligence: 1, happiness: 1 } } }] },
@@ -73,18 +76,20 @@ export const y2006to2010Events: GameEvent[] = [
         text: '小声说：“意大利，点球赢。”',
         requires: { flags: ['parents-trust'] },
         usesMemory: true,
+        stake: { max: 1 },
         outcomes: [
-          { tag: 'success', text: '爸爸押了意大利。点球大战的每一脚他都攥着拳头，最后赢了叔叔们一顿烧烤。', effects: { stats: { wealth: 0.3, influence: 2, happiness: 4 } } },
-          { tag: 'misremember', text: '你把这一届和下一届的决赛记混了，爸爸押错了队，请客的变成了他。', effects: { stats: { wealth: -0.3, happiness: -2 } } },
+          { tag: 'success', text: '爸爸押了意大利。点球大战的每一脚他都攥着拳头，最后赢了叔叔们一把，还蹭了一顿烧烤。', effects: { ret: 1, stats: { influence: 2, happiness: 4 } } },
+          { tag: 'misremember', text: '你把这一届和下一届的决赛记混了，爸爸押错了队，押上的钱输了，请客的也变成了他。', effects: { ret: -1, stats: { happiness: -2 } } },
         ],
       },
       {
         text: '让爸爸在生意伙伴的赌局里坐庄，专收“看好别家”的注',
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
+        stake: { max: 50 },
         outcomes: [
-          { tag: 'success', text: '一圈人押的热门全没夺冠，意大利点球捧杯。爸爸收钱收到手软，从此多了个“球神”的外号。', effects: { stats: { wealth: 12, influence: 3 } } },
-          { tag: 'misremember', text: '你记岔了决赛的对阵，爸爸庄家当得一塌糊涂，赔了一笔不小的钱。', effects: { stats: { wealth: -6, happiness: -3 } } },
+          { tag: 'success', text: '一圈人押的热门全没夺冠，意大利点球捧杯。爸爸收钱收到手软，从此多了个“球神”的外号。', effects: { ret: 0.8, stats: { influence: 3 } } },
+          { tag: 'misremember', text: '你记岔了决赛的对阵，爸爸庄家当得一塌糊涂，赔了一笔不小的钱。', effects: { ret: -0.6, stats: { happiness: -3 } } },
         ],
       },
       { text: '陪爸爸看球，困了就睡', outcomes: [{ text: '你在沙发上睡着了，醒来只听见大人们在吵“那一下是不是犯规”。', effects: { stats: { happiness: 2 } } }] },
@@ -107,8 +112,10 @@ export const y2006to2010Events: GameEvent[] = [
         requires: { flags: ['parents-trust'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '爸妈被你的严肃劲儿吓住，国庆前把仓位清得干干净净。后来同事们一个个哀嚎，爸爸只是笑而不语。', effects: { stats: { wealth: 6, influence: 3 }, addFlags: ['y0610-exited-peak'] } },
-          { tag: 'misremember', text: '你把见顶的月份记晚了一个季度，爸妈照你说的“再拿一阵”，结果全家的账户在半山腰被套牢。', effects: { stats: { wealth: -8, happiness: -5 }, addFlags: ['y0610-trapped-2007'] } },
+          { tag: 'success', requires: { holding: ['ashare'] }, text: '爸妈被你的严肃劲儿吓住，在六千点附近把仓位清得干干净净。后来同事们一个个哀嚎，爸爸只是笑而不语。', effects: { stats: { influence: 3 }, sell: { asset: 'ashare', at: 6000 }, addFlags: ['y0610-exited-peak'] } },
+          { tag: 'success', requires: { notHolding: ['ashare'] }, text: '爸妈被你的严肃劲儿吓住，抵押房子的事不了了之。后来同事们一个个哀嚎，爸爸只是笑而不语。', effects: { stats: { influence: 3 }, addFlags: ['y0610-exited-peak'] } },
+          { tag: 'misremember', requires: { holding: ['ashare'] }, text: '你把见顶的月份记晚了一个季度，爸妈照你说的“再拿一阵”，结果全家的账户在半山腰被套牢。', effects: { stats: { happiness: -5 }, addFlags: ['y0610-trapped-2007'] } },
+          { tag: 'misremember', requires: { notHolding: ['ashare'] }, text: '你把见顶的月份记晚了一个季度，爸妈照你说的“再加一把”，结果全家的钱在山顶被套牢。', effects: { stats: { happiness: -5 }, buy: { asset: 'ashare', at: 5800, ratio: 0.3 }, addFlags: ['y0610-trapped-2007'] } },
         ],
       },
       {
@@ -116,22 +123,23 @@ export const y2006to2010Events: GameEvent[] = [
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '爸爸脸色变了几变，最后还是撤了。后来圈子里亏掉半副身家的人不在少数，他在饭局上一句话也没多说。', effects: { stats: { wealth: 35, influence: 3 }, addFlags: ['y0610-exited-peak'] } },
-          { tag: 'misremember', text: '你喊早了半个月，爸爸卖完眼看着又涨了一截，忍不住追回去，正好追在最高点。', effects: { stats: { wealth: -30, happiness: -6 }, addFlags: ['y0610-trapped-2007'] } },
+          { tag: 'success', requires: { holding: ['ashare'] }, text: '爸爸脸色变了几变，最后没抵押房子，手里的股票也全撤了。后来圈子里亏掉半副身家的人不在少数，他在饭局上一句话也没多说。', effects: { stats: { influence: 3 }, sell: { asset: 'ashare', at: 5800 }, addFlags: ['y0610-exited-peak'] } },
+          { tag: 'success', requires: { notHolding: ['ashare'] }, text: '爸爸脸色变了几变，最后没抵押房子。后来圈子里亏掉半副身家的人不在少数，他在饭局上一句话也没多说。', effects: { stats: { influence: 3 }, addFlags: ['y0610-exited-peak'] } },
+          { tag: 'misremember', text: '你喊早了半个月，爸爸卖完眼看着又涨了一截，忍不住抵押了房子追回去，正好追在最高点。', effects: { stats: { happiness: -6 }, buy: { asset: 'ashare', at: 6100, ratio: 0.4 }, addFlags: ['y0610-trapped-2007'] } },
         ],
       },
       {
         text: '拉着爸爸的投资小圈子一起撤退：“信我，别再加了。”',
         requires: { flags: ['family-has-money'], statMin: { influence: 25 } },
         outcomes: [
-          { text: '你在饭桌上把话说得又准又狠，一桌老板居然真的听进去了，当月整体减仓。你成了圈子里公认的“小神仙”，只是有人开始琢磨你是不是知道什么内幕。', effects: { stats: { wealth: 20, influence: 3, fame: 3 }, alter: [{ id: 'y0610-2007-bull-peak', scale: 3 }], addFlags: ['y0610-exited-peak'] } },
+          { text: '你在饭桌上把话说得又准又狠，一桌老板居然真的听进去了，当月整体减仓。你成了圈子里公认的“小神仙”，只是有人开始琢磨你是不是知道什么内幕。', effects: { stats: { influence: 3, fame: 3 }, sell: { asset: 'ashare', at: 5800 }, alter: [{ id: 'y0610-2007-bull-peak', scale: 3 }], addFlags: ['y0610-exited-peak'] } },
         ],
       },
       {
         text: '把心思放在作业上，大人的事让大人决定',
         outcomes: [
-          { weight: 2, text: '爸妈商量了几个晚上，只把一小部分钱放了进去，后来也没怎么提这事。', effects: { stats: { wealth: -1 } } },
-          { weight: 1, text: '爸妈咬牙又加了仓，那一晚爸爸的烟灰缸堆得老高。', effects: { stats: { wealth: -6, happiness: -3 }, addFlags: ['y0610-trapped-2007'] } },
+          { weight: 2, text: '爸妈商量了几个晚上，只把一小部分钱放了进去，后来也没怎么提这事。', effects: { buy: { asset: 'ashare', at: 5500, ratio: 0.05 } } },
+          { weight: 1, text: '爸妈咬牙抵押了房子加仓，那一晚爸爸的烟灰缸堆得老高。', effects: { stats: { happiness: -3 }, buy: { asset: 'ashare', at: 5800, ratio: 0.3 }, addFlags: ['y0610-trapped-2007'] } },
         ],
       },
     ],
@@ -182,18 +190,20 @@ export const y2006to2010Events: GameEvent[] = [
         text: '对爸妈说：“十月底最低，别割肉，也别急着买。”',
         requires: { flags: ['parents-trust'] },
         usesMemory: true,
+        stake: { max: 50 },
         outcomes: [
-          { tag: 'success', text: '爸妈忍到了十月底才出手，抄在了地板价上。别人还在恐慌，你家的账户已经悄悄回了血。', effects: { stats: { wealth: 4, influence: 3 }, addFlags: ['y0610-bought-bottom'] } },
-          { tag: 'misremember', text: '你把最低点记成了夏天，爸妈抄早了，之后又被腰斩了一次。他们没说什么，只是不再追问“后面怎么走”。', effects: { stats: { wealth: -3, happiness: -4 } } },
+          { tag: 'success', text: '爸妈忍到了十月底才出手，抄在了地板价上。别人还在恐慌，你家的账户已经悄悄回了血。', effects: { stats: { influence: 3 }, buy: { asset: 'ashare', at: 1700 }, addFlags: ['y0610-bought-bottom'] } },
+          { tag: 'misremember', text: '你把最低点记成了夏天，爸妈抄早了，之后又被腰斩了一次。他们没说什么，只是不再追问“后面怎么走”。', effects: { stats: { happiness: -4 }, buy: { asset: 'ashare', at: 3400 } } },
         ],
       },
       {
-        text: '让爸爸把周转的现金全部压到十月底再入场',
+        text: '让爸爸把周转的现金压到十月底再入场',
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
+        stake: { max: 300 },
         outcomes: [
-          { tag: 'success', text: '爸爸踩着最低点重仓买入。别人割肉的时候，他在饭局上反常地沉默，只是偶尔笑一下。', effects: { stats: { wealth: 30, influence: 3 }, addFlags: ['y0610-bought-bottom'] } },
-          { tag: 'misremember', text: '你记错了月份，爸爸抄底抄在了半山腰，眼睁睁看着又跌了三成。', effects: { stats: { wealth: -20, happiness: -5 }, addFlags: ['y0610-trapped-2007'] } },
+          { tag: 'success', text: '爸爸踩着最低点重仓买入。别人割肉的时候，他在饭局上反常地沉默，只是偶尔笑一下。', effects: { stats: { influence: 3 }, buy: { asset: 'ashare', at: 1700 }, addFlags: ['y0610-bought-bottom'] } },
+          { tag: 'misremember', text: '你记错了月份，爸爸抄底抄在了半山腰，眼睁睁看着又跌了三成。', effects: { stats: { happiness: -5 }, buy: { asset: 'ashare', at: 2400 }, addFlags: ['y0610-trapped-2007'] } },
         ],
       },
       {

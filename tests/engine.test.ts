@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   actionPoints, pacing, applyEffects, computeEnding, endYear, headlinesFor, influenceIncome, isShifted, joyBaseline, meets,
   memoryReliability, mortality, newState, pickEvents, presentEvent, quizHint, relationsDrift, relOf, resolveChoice, settleYear,
-  worldlineDiff, yearlyDrift, INTUITION_RATE,
+  worldlineDiff, yearlyDrift, INTUITION_RATE, cashOf, canStake, formatWealth, holdingsValue, priceAt, revalue, stakeRange,
+  MINOR_STAKE_RATIO, TRUSTED_STAKE_RATIO,
 } from '../src/engine'
+import type { Market } from '../src/types'
 import { deserialize, serialize } from '../src/save'
 
 describe('engine', () => {
@@ -381,5 +383,89 @@ describe('annual 事件', () => {
     expect(pickEvents(s, [ev], () => 0.5, 2).map((e) => e.id)).toEqual(['rep'])
     s.year = 2020
     expect(pickEvents(s, [ev], () => 0.5, 2)).toHaveLength(0)
+  })
+})
+
+describe('投入与持仓', () => {
+  const MK: Market[] = [{ id: 'idx', name: '指数', unit: '点', prices: { 2005: 1000, 2006: 2000, 2007: 5000, 2008: 1800 } }]
+  const adult = () => { const s = newState(); s.age = 30; s.year = 2006; s.stats.wealth = 100; return s }
+
+  it('成年人可以动用全部现金；未成年人只能说动父母拿出一部分，被信任时更多；再受单笔上限约束', () => {
+    const s = adult()
+    expect(stakeRange(s, {}).max).toBe(100)
+    expect(stakeRange(s, { max: 30 }).max).toBe(30)
+    s.age = 10
+    expect(stakeRange(s, {}).max).toBeCloseTo(100 * MINOR_STAKE_RATIO)
+    s.flags.add('parents-trust')
+    expect(stakeRange(s, {}).max).toBeCloseTo(100 * TRUSTED_STAKE_RATIO)
+    s.stats.wealth = 0.2
+    expect(canStake(s, { text: '', stake: {}, outcomes: [] })).toBe(false)
+  })
+
+  it('ret 按投入结算：赌赢按赔率赚，赌输血本无归', () => {
+    const s = adult()
+    applyEffects(s, { ret: 3 }, { stake: 10 })
+    expect(s.stats.wealth).toBe(130)
+    const notes = applyEffects(s, { ret: -1 }, { stake: 30 })
+    expect(s.stats.wealth).toBe(100)
+    expect(notes[0]).toContain('血本无归')
+    applyEffects(s, { ret: 5 })
+    expect(s.stats.wealth).toBe(100) // 没有投入时 ret 不生效
+  })
+
+  it('买入变成持仓（财富不变），年底按真实价格重估，卖出按成交价结算', () => {
+    const s = adult()
+    applyEffects(s, { buy: { asset: 'idx' } }, { stake: 50, markets: MK }) // 2006 年按年初价 1000 买入
+    expect(s.stats.wealth).toBe(100)
+    expect(cashOf(s)).toBe(50)
+    expect(s.positions.idx.units).toBe(0.05)
+    revalue(s, MK) // 2006 年底 2000 点
+    expect(s.stats.wealth).toBe(150)
+    s.year = 2007
+    applyEffects(s, { sell: { asset: 'idx', at: 6000 } }, { markets: MK })
+    expect(s.stats.wealth).toBe(350)
+    expect(s.positions.idx).toBeUndefined()
+    expect(holdingsValue(s)).toBe(0)
+  })
+
+  it('拿着不卖，就会吃到真实的暴跌；理财收益只算现金', () => {
+    const s = adult()
+    applyEffects(s, { buy: { asset: 'idx', at: 5000 } }, { stake: 100, markets: MK })
+    s.year = 2008; s.age = 17 // 不结算工资开销，只看持仓
+    const bill = settleYear(s, MK)
+    expect(s.stats.wealth).toBeCloseTo(36)
+    expect(bill.lines.join()).toContain('指数持仓')
+  })
+
+  it('父母自作主张：按现金比例买入；wealthRatio 按现金比例增减', () => {
+    const s = adult()
+    applyEffects(s, { buy: { asset: 'idx', ratio: 0.3 } }, { markets: MK })
+    expect(s.positions.idx.cost).toBeCloseTo(30)
+    applyEffects(s, { wealthRatio: -0.5 })
+    expect(s.stats.wealth).toBeCloseTo(65)
+  })
+
+  it('holding / notHolding 条件；价格取当年或之前最近一年', () => {
+    const s = adult()
+    expect(meets(s, { notHolding: ['idx'] })).toBe(true)
+    applyEffects(s, { buy: { asset: 'idx' } }, { stake: 10, markets: MK })
+    expect(meets(s, { holding: ['idx'] })).toBe(true)
+    expect(priceAt(MK[0], 2030)).toBe(1800)
+    expect(priceAt(MK[0], 2000)).toBeUndefined()
+  })
+
+  it('小额显示为元，避免几千块显示成“0万”', () => {
+    expect(formatWealth(0.3)).toBe('3000元')
+    expect(formatWealth(3.25)).toBe('3.3万')
+    expect(formatWealth(120)).toBe('120万')
+  })
+
+  it('持仓随存档保存；旧存档没有持仓字段时补成空', () => {
+    const s = adult()
+    applyEffects(s, { buy: { asset: 'idx' } }, { stake: 10, markets: MK })
+    expect(deserialize(serialize(s))!.positions.idx.units).toBeCloseTo(0.01)
+    const old = JSON.parse(serialize(newState()))
+    delete old.data.positions
+    expect(deserialize(JSON.stringify(old))!.positions).toEqual({})
   })
 })

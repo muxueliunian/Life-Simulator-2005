@@ -205,18 +205,20 @@ export const y2011to2015Events: GameEvent[] = [
       {
         text: '用压岁钱买一点，然后假装忘了它',
         usesMemory: true,
+        stake: { max: 0.5 },
         outcomes: [
-          { tag: 'success', text: '你把一千块压岁钱换成了一小串字符，抄在本子最后一页。之后价格怎么跌，你都没再打开看。', effects: { stats: { wealth: -0.1, memory: 1 }, addFlags: ['y1115-btc-hodl'] } },
-          { tag: 'misremember', text: '你记错了买点，买完一个月就跌掉一大半。你没忍住，割肉离场，心疼了一个寒假。', effects: { stats: { wealth: -0.06, happiness: -3 } } },
+          { tag: 'success', text: '你把压岁钱换成了一小串字符，抄在本子最后一页。之后价格怎么跌，你都没再打开看。', effects: { stats: { memory: 1 }, buy: { asset: 'btc', at: 1000 }, addFlags: ['y1115-btc-hodl'] } },
+          { tag: 'misremember', text: '你记错了买点，买完一个月就跌掉一大半。你没忍住，割肉离场，心疼了一个寒假。', effects: { ret: -0.6, stats: { happiness: -3 } } },
         ],
       },
       {
         text: '说服爸妈拿出一笔钱，并且“十年内不许卖”',
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
+        stake: { max: 50 },
         outcomes: [
-          { tag: 'success', text: '爸爸犹豫了三天，还是买了。他把密码抄成三份藏在不同的地方，嘴上说“就当捐了”。', effects: { stats: { wealth: -5, influence: 2 }, addFlags: ['y1115-btc-family'] } },
-          { tag: 'misremember', text: '你记岔了监管出手的时间，爸爸刚买进就碰上大跌，一气之下全卖了。', effects: { stats: { wealth: -3, happiness: -3 } } },
+          { tag: 'success', text: '爸爸犹豫了三天，还是买了。他把密码抄成三份藏在不同的地方，嘴上说“就当捐了”。', effects: { stats: { influence: 2 }, buy: { asset: 'btc', at: 1000 }, addFlags: ['y1115-btc-family'] } },
+          { tag: 'misremember', text: '你记岔了监管出手的时间，爸爸刚买进就碰上大跌，一气之下全卖了。', effects: { ret: -0.5, stats: { happiness: -3 } } },
         ],
       },
       {
@@ -267,9 +269,10 @@ export const y2011to2015Events: GameEvent[] = [
         text: '让爸爸押德国夺冠',
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
+        stake: { max: 50 },
         outcomes: [
-          { tag: 'success', text: '决赛加时赛那一脚进球时，爸爸在客厅里跳了起来。这一注够全家出去玩一趟了。', effects: { stats: { wealth: 8, influence: 2, happiness: 3 } } },
-          { tag: 'misremember', text: '你记成了阿根廷，爸爸押错了队，输掉了一笔不小的钱。', effects: { stats: { wealth: -4, happiness: -3 } } },
+          { tag: 'success', text: '决赛加时赛那一脚进球时，爸爸在客厅里跳了起来。赔率不低，这一注赚得够全家出去玩好几趟。', effects: { ret: 2, stats: { influence: 2, happiness: 3 } } },
+          { tag: 'misremember', text: '你记成了阿根廷，爸爸押错了队，押上的钱全输了。', effects: { ret: -1, stats: { happiness: -3 } } },
         ],
       },
       { text: '蒙着被子偷偷看球', outcomes: [{ text: '你被宿管抓了个正着，写了一份检讨。值了。', effects: { stats: { happiness: 3, health: -1 } } }] },
@@ -318,18 +321,20 @@ export const y2011to2015Events: GameEvent[] = [
         text: '劝爸妈年底进场：“明年六月前一定要走。”',
         requires: { flags: ['parents-trust'] },
         usesMemory: true,
+        stake: { max: 50 },
         outcomes: [
-          { tag: 'success', text: '爸妈拿出一笔钱建了仓，账户一天比一天红。你在日历的六月那一页画了一个大大的红圈。', effects: { stats: { wealth: 3, influence: 1 }, addFlags: ['y1115-in-bull'] } },
-          { tag: 'misremember', text: '你把进场时间记早了，买在了一轮小回调前，爸妈被吓得先割了一半。', effects: { stats: { wealth: -1, happiness: -2 } } },
+          { tag: 'success', text: '爸妈拿出一笔钱建了仓，账户一天比一天红。你在日历的六月那一页画了一个大大的红圈。', effects: { stats: { influence: 1 }, buy: { asset: 'ashare', at: 2400 }, addFlags: ['y1115-in-bull'] } },
+          { tag: 'misremember', text: '你把进场时间记早了，买在了一轮小回调前，爸妈被吓得全割了。', effects: { ret: -0.1, stats: { happiness: -2 } } },
         ],
       },
       {
         text: '让爸爸把生意上的闲钱分一块进场',
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
+        stake: { max: 300 },
         outcomes: [
-          { tag: 'success', text: '爸爸进场的时机几乎踩在起点上，过年的时候，他给全家每个人都包了一个厚厚的红包。', effects: { stats: { wealth: 20, influence: 2 }, addFlags: ['y1115-in-bull'] } },
-          { tag: 'misremember', text: '你记错了板块，爸爸买的股票在牛市里几乎没怎么涨，他开始怀疑你的“神通”。', effects: { stats: { wealth: -3, happiness: -2 } } },
+          { tag: 'success', text: '爸爸进场的时机几乎踩在起点上，过年的时候，他给全家每个人都包了一个厚厚的红包。', effects: { stats: { influence: 2 }, buy: { asset: 'ashare', at: 2300 }, addFlags: ['y1115-in-bull'] } },
+          { tag: 'misremember', text: '你记错了板块，爸爸买的股票在牛市里几乎没怎么涨，他卖掉后开始怀疑你的“神通”。', effects: { ret: 0, stats: { happiness: -2 } } },
         ],
       },
       { text: '高二了，专心学习', outcomes: [{ text: '你把行情抛在脑后，期末考进了年级前列。', effects: { stats: { intelligence: 3 } } }] },
@@ -368,11 +373,11 @@ export const y2011to2015Events: GameEvent[] = [
     choices: [
       {
         text: '盯着爸妈：“六月中旬之前，全卖了！”',
-        requires: { flags: ['y1115-in-bull'] },
+        requires: { holding: ['ashare'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '爸妈在最高点前一周清了仓。之后的每个跌停日，爸爸都要给你夹一块排骨。', effects: { stats: { wealth: 15, influence: 3, happiness: 4 }, addFlags: ['y1115-exited-2015'] } },
-          { tag: 'misremember', text: '你把见顶日记晚了一个月，等爸妈想卖时，账户已经连着跌停卖不出去了。', effects: { stats: { wealth: -10, happiness: -6 }, addFlags: ['y1115-trapped-2015'] } },
+          { tag: 'success', text: '爸妈在最高点前一周清了仓。之后的每个跌停日，爸爸都要给你夹一块排骨。', effects: { stats: { influence: 3, happiness: 4 }, sell: { asset: 'ashare', at: 5000 }, addFlags: ['y1115-exited-2015'] } },
+          { tag: 'misremember', text: '你把见顶日记晚了一个月，等爸妈想卖时，账户已经连着跌停，最后在三千点附近才卖掉。', effects: { stats: { happiness: -6 }, sell: { asset: 'ashare', at: 3000 }, addFlags: ['y1115-trapped-2015'] } },
         ],
       },
       {
@@ -380,8 +385,8 @@ export const y2011to2015Events: GameEvent[] = [
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '爸爸本来已经签好了配资合同，被你闹得撕了。后来他听说，那个介绍配资的朋友连车都卖了。', effects: { stats: { wealth: 10, influence: 2 }, addFlags: ['y1115-exited-2015'] } },
-          { tag: 'misremember', text: '你说得太晚，爸爸已经加了杠杆，暴跌第一周就被强制平仓。', effects: { stats: { wealth: -40, happiness: -8 }, addFlags: ['y1115-trapped-2015'] } },
+          { tag: 'success', text: '爸爸本来已经签好了配资合同，被你闹得撕了。后来他听说，那个介绍配资的朋友连车都卖了。', effects: { stats: { influence: 2 }, addFlags: ['y1115-exited-2015'] } },
+          { tag: 'misremember', text: '你说得太晚，爸爸已经加了杠杆，暴跌第一周就被强制平仓，家底亏掉了一大块。', effects: { stats: { happiness: -8 }, wealthRatio: -0.25, addFlags: ['y1115-trapped-2015'] } },
         ],
       },
       {

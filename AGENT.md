@@ -43,6 +43,7 @@
 - **写实人生（DESIGN_V2 P1）**：属性上限 100（财富不限）；每年 `yearlyDrift` 让快乐回落到 `joyBaseline`，名望（6%/年）和影响力（5%/年）回落，并按财富、名望、公司、基金会自然获得影响力（`influenceIncome`），35 岁后体质下降；`settleYear` 结算年度账单（18 岁起）；死亡按 `mortality(年龄, 体质)` 概率判定，寿命上限 `state.maxAge`（默认 100，科技树可以提高）；每年最多 `MAX_FIXED_PER_YEAR = 4` 个固定事件，按稀有度取舍。
 - **世界状态与科技树（DESIGN_V2 P3）**：`state.world` 记录世界变量（登记在 `src/data/world.ts`，新变量必须登记）。事件用 `Effects.world` 修改它、用 `Condition.worldMin/worldMax` 读取它；`Effects.maxAge` 用于延寿；`variants` 按世界状态换正文；`annual: true` 的事件每年满足条件就触发（用于世界的默认走向，如 AI 行业年报）；`dependsOn` 依赖的锚点被改写后，事件标注“偏移”，预知可靠度减半。每年的新闻在 `src/data/headlines.ts`，可改写的锚点（2026 年前）必须有带 `altered` 的新闻（测试会检查）。
 - **亲人（DESIGN_V2 P5）**：`state.rel` 记录父母身体与离世人数、伴侣感情、孩子出生年份；事件用 `relMin/relMax`（含派生的 `parentAge`、`childAge`）读取、`Effects.rel` 修改。父母离世、伴侣离世由引擎写入标记（`parent-lost` / `parents-gone` / `partner-lost`），由 `events/family.ts` 的事件接住。
+- **投入与持仓（经济系统）**：投资/赌博选项写 `Choice.stake`，玩家自己决定投多少；结果用 `Effects.ret`（按投入的收益率结算）或 `Effects.buy/sell`（买卖 `src/data/markets.ts` 里的资产）。持仓计入财富，每年年底按真实价格重估，所以拿着不卖也会吃到真实的牛市和暴跌。未成年时只能说动父母拿出一部分现金（`MINOR_STAKE_RATIO` / `TRUSTED_STAKE_RATIO`），每笔还有 `stake.max` 上限。家里“整体亏/赚”用 `Effects.wealthRatio`（按现金比例），不要写死金额。
 - **新闻在年底显示**（“年度新闻”），避免剧透当年的预知题。
 - **设计总纲**：`docs/DESIGN_V2.md`（爽点三阶段、答题预知、世界线、AI 公司主线、实施进度）。
 - **并行**：多个会话同时写内容时，遵守 `docs/PARALLEL.md`（各写各的新文件，不改引擎/UI/类型/已有事件）。

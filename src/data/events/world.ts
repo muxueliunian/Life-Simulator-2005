@@ -20,7 +20,7 @@ export const worldEvents: GameEvent[] = [
       {
         text: '自己创业做竞品',
         requires: { notFlags: ['ai-company'] },
-        outcomes: [{ text: '你拿着这笔钱在东京注册了自己的 AI 公司，和 closeai 正面竞争。业内开始流传一个新名字——你的。', effects: { stats: { influence: 15, fame: 10, wealth: -500 }, alter: [{ id: 'world-ai-lab', scale: 15 }], world: { 'ai-player': 15, 'ai-closeai': -5 }, addFlags: ['ai-founder', 'ai-company', 'ai-japan', 'has-business'] } }],
+        outcomes: [{ text: '你拿着这笔钱在东京注册了自己的 AI 公司，和 closeai 正面竞争。业内开始流传一个新名字——你的。', effects: { stats: { influence: 15, fame: 10, wealth: -500 }, alter: [{ id: 'world-ai-lab', scale: 15 }], world: { 'ai-player': 15, 'ai-closeai': -5 }, addFlags: ['ai-founder', 'ai-company', 'ai-japan', 'has-business'], removeFlags: ['y1620-in-college', 'employed'] } }],
       },
     ],
   },

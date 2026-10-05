@@ -35,6 +35,28 @@ export interface Effects {
   maxAge?: number
   /** 亲人状态增减：父母身体、与伴侣的感情（见 Relations） */
   rel?: Partial<Record<'parents' | 'partner', number>>
+  /**
+   * 投入的收益率（只对带 stake 的选项有效）：财富 += 投入 × ret。
+   * +1 = 赚一倍，0 = 不赚不亏，-1 = 血本无归。赌球按赔率、炒股按真实涨跌来写。
+   */
+  ret?: number
+  /** 按现金的比例增减财富（如 -0.2 = 家底亏掉两成），代替写死的金额，穷富都合理 */
+  wealthRatio?: number
+  /**
+   * 买入资产（见 src/data/markets.ts），变成持仓，此后每年按真实价格重估。
+   * 金额 = 玩家的投入；写 ratio 时改为“现金 × ratio”（父母自作主张等）。at = 成交价，不写按当年年初价。
+   */
+  buy?: { asset: string; at?: number; ratio?: number }
+  /** 卖出持仓：part = 卖出比例（默认全部），at = 成交价，不写按当年年初价 */
+  sell?: { asset: string; at?: number; part?: number }
+}
+
+/** 投入：选了这个选项后，玩家自己决定投多少钱（单位万元） */
+export interface Stake {
+  /** 最少投入，默认 0.1（一千元）；可用资金不够时选项不出现 */
+  min?: number
+  /** 单笔上限：市场容量、私下赌局的规模等 */
+  max?: number
 }
 
 export interface Condition {
@@ -61,6 +83,9 @@ export interface Condition {
   /** 亲人状态范围（见 RelKey）。没有孩子时 childAge 为 -1，写孩子的事件请同时要求 has-child */
   relMin?: Partial<Record<RelKey, number>>
   relMax?: Partial<Record<RelKey, number>>
+  /** 持有 / 没有持有某种资产（见 src/data/markets.ts） */
+  holding?: string[]
+  notHolding?: string[]
 }
 
 /**
@@ -116,6 +141,8 @@ export interface Choice {
   free?: boolean
   /** 预知题（只对 usesMemory 有效）；不写时用事件的 quiz 或题库 src/data/quizzes.ts */
   quiz?: Quiz
+  /** 投资/赌博：选了之后由玩家决定投入多少，结果按 Effects.ret / buy 结算 */
+  stake?: Stake
   /** 结果列表，按权重随机；只有一个即为确定结果 */
   outcomes: (Outcome & { tag?: 'success' | 'fail' | 'misremember' })[]
 }
@@ -208,6 +235,27 @@ export interface GameState {
   joyYears: number
   /** 亲人：父母、伴侣、孩子（DESIGN_V2 P5） */
   rel: Relations
+  /** 持仓：资产 id → 持仓。持仓市值已经计入 stats.wealth，每年年底按真实价格重估 */
+  positions: Record<string, Position>
+}
+
+/** 一笔持仓。市值 = units × mark */
+export interface Position {
+  units: number
+  /** 上一次估值用的价格 */
+  mark: number
+  /** 买入花的钱（万元），用于显示盈亏 */
+  cost: number
+}
+
+/** 可以买卖的资产与它的真实价格（年末收盘，约数） */
+export interface Market {
+  id: string
+  name: string
+  /** 价格的单位，如“点”“美元” */
+  unit: string
+  /** 年份 → 年末价格；最后一年之后价格不再变化 */
+  prices: Record<number, number>
 }
 
 /** 亲人的状态。父母年龄、孩子年龄由年份派生，见 engine.relOf */

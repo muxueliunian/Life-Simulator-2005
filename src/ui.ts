@@ -1,6 +1,7 @@
 import { bannerEl, heroEl } from './art'
-import { formatWealth, relOf, worldlineDiff, worldOf } from './engine'
+import { cashOf, formatWealth, relOf, worldlineDiff, worldOf } from './engine'
 import { HEADLINES } from './data/headlines'
+import { MARKETS } from './data/markets'
 import { TECH_MAX, WORLD_VARS } from './data/world'
 import { ORIGINS, TALENTS } from './data/talents'
 import { ALLOC_MAX, ALLOC_STATS, drawOrigin, drawTalent, runGame, START_POINTS, START_REROLLS, type Host } from './game'
@@ -178,7 +179,8 @@ async function startGame(origin: Origin, talents: Talent[], alloc: Record<string
     grid.append(row)
   }
   const family = h('div', 'family')
-  panel.append(top, divWrap, grid, family)
+  const holdings = h('div', 'family holdings')
+  panel.append(top, divWrap, grid, holdings, family)
   const log = h('div', 'log')
   const stage = h('div', 'stage')
   main.append(log, stage)
@@ -210,6 +212,7 @@ async function startGame(origin: Origin, talents: Talent[], alloc: Record<string
     for (const [k] of STAT_LABELS) roll(k, s.stats[k])
     divBar.style.width = `${s.divergence}%`
     family.replaceChildren(...familyLines(s).map((t) => h('p', '', t)))
+    holdings.replaceChildren(...holdingLines(s).map((t) => h('p', '', t)))
   }
   const addLog = (s: GameState, ev: GameEvent, extra: string) => {
     const line = h('div', `log-line ${ev.rarity ?? 'common'}`)
@@ -320,8 +323,43 @@ async function startGame(origin: Origin, talents: Talent[], alloc: Record<string
         reveal()
       })
     },
-    async showOutcome(ev, outcome: Outcome, check, s, auto) {
-      const note = checkNote(check)
+    async showStake(ev, choice, r, s) {
+      const box = h('div', `event stake ${ev.rarity ?? 'common'}`)
+      const tip = r.minor
+        ? `你还没成年，钱在爸妈手里：这一笔最多能说动他们拿出 ${formatWealth(r.max)}。`
+        : `可动用的现金 ${formatWealth(cashOf(s))}，这一笔最多投 ${formatWealth(r.max)}。`
+      box.append(h('h3', '', '投入多少？'), h('p', '', choice.text), h('p', 'muted', tip))
+      const nice = (v: number) => (v < 10 ? Math.round(v * 10) / 10 : v < 1000 ? Math.round(v) : Math.round(v / 10) * 10)
+      let amount = nice(r.min + (r.max - r.min) * 0.25)
+      const show = h('div', 'stake-amount')
+      const slider = h('input') as HTMLInputElement
+      slider.type = 'range'
+      slider.min = '0'
+      slider.max = '1000'
+      const set = (v: number) => {
+        amount = Math.min(r.max, Math.max(r.min, nice(v)))
+        show.textContent = formatWealth(amount)
+        slider.value = String(r.max > r.min ? Math.round(((amount - r.min) / (r.max - r.min)) * 1000) : 1000)
+      }
+      slider.oninput = () => set(r.min + ((r.max - r.min) * Number(slider.value)) / 1000)
+      const quick = h('div', 'stake-quick')
+      for (const [label, pct] of [['一成', 0.1], ['四分之一', 0.25], ['一半', 0.5], ['能投的全投', 1]] as const) {
+        const b = h('button', 'btn small', label)
+        b.onclick = () => set(r.max * pct)
+        quick.append(b)
+      }
+      set(amount)
+      box.append(show, slider, quick)
+      return new Promise<number>((res) => {
+        const ok = h('button', 'btn big', '就投这么多')
+        ok.onclick = () => { stage.replaceChildren(); res(amount) }
+        box.append(ok)
+        stage.replaceChildren(box)
+        reveal()
+      })
+    },
+    async showOutcome(ev, outcome: Outcome, check, s, auto, money) {
+      const note = checkNote(check) + (money?.length ? `（${money.join('；')}）` : '')
       addLog(s, ev, `${outcome.text}${note}`)
       reveal()
       if (auto) await sleep(1500 / speed)
@@ -355,6 +393,16 @@ function familyLines(s: GameState): string[] {
   const ca = relOf(s, 'childAge')
   if (s.flags.has('has-child')) lines.push(`孩子：${ca > 0 ? `${ca} 岁` : '刚出生'}${s.flags.has('grandchild') ? ' · 已有孙辈' : ''}`)
   return lines
+}
+
+/** 侧栏的“持仓”一栏：市值与浮动盈亏 */
+function holdingLines(s: GameState): string[] {
+  return Object.entries(s.positions).map(([id, p]) => {
+    const name = MARKETS.find((m) => m.id === id)?.name ?? id
+    const value = p.units * p.mark
+    const gain = value - p.cost
+    return `持仓 · ${name} ${formatWealth(value)}（${gain >= 0 ? '赚' : '亏'} ${formatWealth(Math.abs(gain))}）`
+  })
 }
 
 /** 世界线面板：原历史 vs 你的世界、科技树、AI 格局、世界趋势 */

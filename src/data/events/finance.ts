@@ -14,13 +14,14 @@ export const financeEvents: GameEvent[] = [
       {
         text: '大声说“西班牙！”',
         usesMemory: true,
+        stake: { max: 2 },
         outcomes: [
           {
             tag: 'success',
-            text: '爸爸笑着押了一小注西班牙，结果赢了。他看你的眼神开始不太一样了。',
-            effects: { stats: { wealth: 3, influence: 2 }, addFlags: ['parents-trust'] },
+            text: '爸爸笑着押了一注西班牙，结果赢了。他看你的眼神开始不太一样了。',
+            effects: { ret: 1, stats: { influence: 2 }, addFlags: ['parents-trust'] },
           },
-          { tag: 'misremember', text: '你记混了，喊成了荷兰。爸爸听了你的，输了一点小钱。', effects: { stats: { wealth: -2, happiness: -3 } } },
+          { tag: 'misremember', text: '你记混了，喊成了荷兰。爸爸听了你的，押上的钱输了。', effects: { ret: -1, stats: { happiness: -3 } } },
         ],
       },
       { text: '假装什么都不知道，安静看球', outcomes: [{ text: '你平静地看完了一场世界杯。', effects: { stats: { happiness: 2 } } }] },
@@ -35,22 +36,24 @@ export const financeEvents: GameEvent[] = [
     requires: { minAge: 16 },
     title: '一种叫比特币的东西',
     text: '你在宿舍里听到有人聊起一种叫“比特币”的东西。你知道它未来会涨成什么样。可你只是个学生，手上能动用的钱并不多。',
+    variants: [{ requires: { notFlags: ['y1620-in-college'] }, text: '身边越来越多的人聊起一种叫“比特币”的东西。你知道它未来会涨成什么样，也知道今年年底会有一个疯狂的顶。' }],
     realFact: '2017 年比特币从年初约 1000 美元涨到年底接近 20000 美元，之后大幅回落。',
     choices: [
       {
         text: '说服父母拿出积蓄投资',
         requires: { flags: ['family-has-money'] },
         usesMemory: true,
+        stake: { max: 300 },
         outcomes: [
-          { tag: 'success', text: '父母半信半疑地投了一笔。你默默看着价格一路向上，在高点前把仓位撤回来了。', effects: { stats: { wealth: 500, influence: 3 } } },
-          { tag: 'misremember', text: '你记错了时间点，买在了高位，被套了很久。', effects: { stats: { wealth: -80, happiness: -8 } } },
+          { tag: 'success', text: '父母半信半疑地在年中投了一笔。你默默看着价格一路向上，在高点前把仓位撤回来了。', effects: { ret: 4, stats: { influence: 3 } } },
+          { tag: 'misremember', text: '你记错了时间点，买在了接近两万美元的高位，接下来是漫长的被套。', effects: { stats: { happiness: -8 }, buy: { asset: 'btc', at: 19000 } } },
         ],
       },
       {
-        text: '用生活费买一点点',
+        text: '拿点闲钱买一点点',
+        stake: { max: 0.5 },
         outcomes: [
-          { weight: 2, text: '你用生活费买了一点点，几年后回头看，也算小赚。', effects: { stats: { wealth: 20, happiness: 3 } } },
-          { weight: 1, text: '钱不多，你很快也就忘了这件事。', effects: {} },
+          { text: '你买了一点点，钱不多，很快也就忘了这件事。', effects: { stats: { happiness: 1 }, buy: { asset: 'btc', at: 5000 } } },
         ],
       },
       { text: '算了，先好好学习', outcomes: [{ text: '你把心思放回书本上。', effects: { stats: { intelligence: 4 } } }] },
@@ -67,14 +70,22 @@ export const financeEvents: GameEvent[] = [
     realFact: '2022 年卡塔尔世界杯决赛，阿根廷与法国常规与加时 3:3，点球大战 4:2 阿根廷夺冠。',
     choices: [
       {
-        text: '全押阿根廷夺冠',
+        text: '押阿根廷夺冠',
         usesMemory: true,
+        stake: { max: 500 },
         outcomes: [
-          { tag: 'success', text: '点球踢进的那一刻你整个人都在抖，这一注让你一夜暴富。', effects: { stats: { wealth: 800, fame: 5, happiness: 10 } } },
-          { tag: 'misremember', text: '你把记忆里的另一场比赛弄混了，押错了队，血本无归。', effects: { stats: { wealth: -300, happiness: -15 } } },
+          { tag: 'success', text: '点球踢进的那一刻你整个人都在抖，这一注的赔率让你一夜暴富。', effects: { ret: 4, stats: { fame: 5, happiness: 10 } } },
+          { tag: 'misremember', text: '你把记忆里的另一场比赛弄混了，押错了队，血本无归。', effects: { ret: -1, stats: { happiness: -15 } } },
         ],
       },
-      { text: '小注怡情', outcomes: [{ text: '你小赚一笔，请朋友们吃了顿火锅。', effects: { stats: { wealth: 20, happiness: 5 } } }] },
+      {
+        text: '小注怡情',
+        stake: { max: 2 },
+        outcomes: [
+          { text: '你随手押了几场，小赚一笔，请朋友们吃了顿火锅。', effects: { ret: 1, stats: { happiness: 5 } } },
+          { text: '你押的几场全都爆了冷，就当交了观赛门票。', effects: { ret: -1, stats: { happiness: -1 } } },
+        ],
+      },
       { text: '不碰赌博', outcomes: [{ text: '你安静看球，只是为那位阿根廷十号落了一次泪。', effects: { stats: { happiness: 3 } } }] },
     ],
   },

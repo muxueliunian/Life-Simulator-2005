@@ -2,11 +2,13 @@ import { ALL_ACTIONS } from './data/actions'
 import { ALL_EVENTS } from './data/events'
 import { EXTRA_CHOICES } from './data/extra-choices'
 import { HEADLINES } from './data/headlines'
+import { MARKETS } from './data/markets'
 import { QUIZZES } from './data/quizzes'
 import { ORIGINS, TALENTS } from './data/talents'
 import {
-  applyEffects, applyTalentOrigin, availableActions, computeEnding, endYear, formatWealth, headlinesFor, isShifted, markAction,
-  meets, newState, pacing, pickEvents, presentEvent, pushLog, quizHint, resolveChoice, settleYear, withExtraChoices,
+  applyEffects, applyTalentOrigin, availableActions, canStake, computeEnding, endYear, formatWealth, headlinesFor, isShifted,
+  markAction, meets, newState, pacing, pickEvents, presentEvent, pushLog, quizHint, resolveChoice, settleYear, stakeRange,
+  withExtraChoices,
 } from './engine'
 import { weightedPick, type Rng } from './rng'
 import type {
@@ -52,10 +54,29 @@ export interface Host {
    * 预知题：返回选项下标，或 null 表示“交给直觉”。不实现时一律交给直觉（测试、模拟用）。
    */
   showQuiz?(event: GameEvent, choice: Choice, quiz: Quiz, hint: QuizHint, state: GameState): Promise<number | null>
-  /** check 是预知选项的判定结果；auto 为 true 时不需要玩家点“继续”（襁褓期提速） */
-  showOutcome(event: GameEvent, outcome: Outcome, check: MemoryCheck | undefined, state: GameState, auto?: boolean): Promise<void>
+  /** 投入多少钱（万元），范围见 range。不实现时投入上限的一半（测试、模拟用） */
+  showStake?(event: GameEvent, choice: Choice, range: StakeRange, state: GameState): Promise<number>
+  /**
+   * check 是预知选项的判定结果；auto 为 true 时不需要玩家点“继续”（襁褓期提速）；
+   * money 是资金变动的说明（投入多少、赚亏多少、买卖持仓）
+   */
+  showOutcome(
+    event: GameEvent, outcome: Outcome, check: MemoryCheck | undefined, state: GameState, auto?: boolean, money?: string[],
+  ): Promise<void>
   onYear(state: GameState): void
 }
+
+export type StakeRange = ReturnType<typeof stakeRange>
+
+/** 让玩家决定投入多少，并限制在允许的范围内 */
+async function askStake(host: Host, ev: GameEvent, c: Choice, s: GameState): Promise<number> {
+  if (!c.stake) return 0
+  const r = stakeRange(s, c.stake)
+  const want = host.showStake ? await host.showStake(ev, c, r, s) : r.max / 2
+  return Math.min(r.max, Math.max(r.min, want))
+}
+
+const money = (notes: string[]) => (notes.length ? `（${notes.join('；')}）` : '')
 
 /** 把行动包装成事件，复用 Host 的结果展示 */
 function actionEvent(a: GameAction): GameEvent {
@@ -69,6 +90,7 @@ export async function runGame(
   origin: Origin, talents: Talent[], host: Host, rng: Rng = Math.random, bonus: StatDelta = {}, resume?: GameState,
 ): Promise<{ state: GameState; ending: Ending }> {
   const s = resume ?? newState()
+  const ctx = { markets: MARKETS }
   if (!resume) {
     applyTalentOrigin(s, talents, origin)
     applyEffects(s, { stats: bonus })
@@ -82,33 +104,35 @@ export async function runGame(
       s.seen.add(raw.id)
       const ev = presentEvent(s, raw)
       const shifted = isShifted(s, raw)
-      const base = ev.choices?.filter((c) => meets(s, c.requires)) ?? []
+      const base = ev.choices?.filter((c) => meets(s, c.requires) && canStake(s, c)) ?? []
       const visible = base.length ? withExtraChoices(s, base, EXTRA_CHOICES, rng, pace.extraChoices) : []
       if (!ev.choices || visible.length === 0) {
-        applyEffects(s, ev.effects)
-        pushLog(s, ev.title, ev.text, ev.rarity)
+        const notes = applyEffects(s, ev.effects, ctx)
+        pushLog(s, ev.title, ev.text + money(notes), ev.rarity)
         await host.showAuto(ev, s)
       } else {
         const choice = await host.showChoice(ev, visible, s)
+        const stake = await askStake(host, ev, choice, s)
         const quiz = choice.usesMemory ? choice.quiz ?? raw.quiz ?? QUIZZES[raw.id] : undefined
         let pick: number | null = null
         if (quiz && host.showQuiz) pick = await host.showQuiz(ev, choice, quiz, quizHint(s, quiz, rng, shifted), s)
         const { outcome, check } = resolveChoice(s, choice, rng, { shifted, quiz, pick })
-        applyEffects(s, outcome.effects)
-        pushLog(s, ev.title, `${choice.text} → ${outcome.text}`, ev.rarity)
-        await host.showOutcome(ev, outcome, check, s, pace.autoAdvance)
+        const notes = applyEffects(s, outcome.effects, { ...ctx, stake })
+        pushLog(s, ev.title, `${choice.text} → ${outcome.text}${money(notes)}`, ev.rarity)
+        await host.showOutcome(ev, outcome, check, s, pace.autoAdvance, notes)
       }
       if (s.stats.health <= 0) { s.alive = false; break }
     }
     if (!s.alive) break
     for (let points = pace.actionPoints; points > 0; points--) {
-      const act = await host.showActions(s, availableActions(s, ALL_ACTIONS), points)
+      const act = await host.showActions(s, availableActions(s, ALL_ACTIONS).filter((a) => canStake(s, a)), points)
       if (!act) break
       markAction(s, act)
+      const stake = await askStake(host, actionEvent(act), act, s)
       const { outcome, check } = resolveChoice(s, act, rng)
-      applyEffects(s, outcome.effects)
-      pushLog(s, act.text, outcome.text)
-      await host.showOutcome(actionEvent(act), outcome, check, s)
+      const notes = applyEffects(s, outcome.effects, { ...ctx, stake })
+      pushLog(s, act.text, outcome.text + money(notes))
+      await host.showOutcome(actionEvent(act), outcome, check, s, false, notes)
       if (s.stats.health <= 0) { s.alive = false; break }
     }
     if (!s.alive) break
@@ -118,10 +142,11 @@ export async function runGame(
       const text = news.map((n) => (n.altered ? `【你的世界线】${n.text}` : n.text)).join('；')
       await host.showAuto({ id: 'year-news', category: 'world', rarity: news.some((n) => n.altered) ? 'rare' : undefined, title: '年度新闻', text }, s)
     }
-    const bill = settleYear(s)
+    const bill = settleYear(s, MARKETS)
     if (bill.lines.length) {
       const net = bill.income - bill.expense
-      const text = `${bill.lines.join('，')}。净${net >= 0 ? '收入' : '支出'} ${formatWealth(Math.abs(net))}。`
+      const sum = bill.income || bill.expense ? `净${net >= 0 ? '收入' : '支出'} ${formatWealth(Math.abs(net))}。` : ''
+      const text = `${bill.lines.join('，')}。${sum}`
       pushLog(s, '年度账单', text)
       await host.showAuto({ id: 'year-bill', category: 'life', title: '年度账单', text }, s)
     }

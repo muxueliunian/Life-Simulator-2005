@@ -1,6 +1,6 @@
 import type {
-  Choice, GameAction, Condition, Effects, Ending, EndingDim, GameEvent, GameState, Headline, MemoryCheck, Origin, Outcome, Quiz, QuizHint,
-  RelKey, Stats, StatKey, Talent, YearBill,
+  Choice, GameAction, Condition, Effects, Ending, EndingDim, GameEvent, GameState, Headline, Market, MemoryCheck, Origin, Outcome, Quiz,
+  QuizHint, RelKey, Stake, Stats, StatKey, Talent, YearBill,
 } from './types'
 import { weightedPick, type Rng } from './rng'
 
@@ -21,6 +21,11 @@ export const INTUITION_RATE = 0.7
 export const MEMORY_FADE = 0.8
 /** 父母比主角大多少岁 */
 export const PARENT_AGE_GAP = 26
+/** 未成年时最多能说动父母拿出多少比例的现金；被父母信任（parents-trust）时更多 */
+export const MINOR_STAKE_RATIO = 0.1
+export const TRUSTED_STAKE_RATIO = 0.3
+/** 默认最少投入（万元） */
+export const MIN_STAKE = 0.1
 
 export function newState(): GameState {
   return {
@@ -41,11 +46,20 @@ export function newState(): GameState {
     joySum: 0,
     joyYears: 0,
     rel: { parents: 85, parentsLost: 0, partner: 0, childBorn: 0 },
+    positions: {},
   }
 }
 
-export function applyEffects(s: GameState, e?: Effects): void {
-  if (!e) return
+/** 结算投入与持仓需要的上下文：玩家这次投入了多少、资产价格表 */
+export interface EffectCtx {
+  stake?: number
+  markets?: Market[]
+}
+
+/** 应用效果。返回资金变动的说明（投入、买卖），给 UI 和日志显示 */
+export function applyEffects(s: GameState, e?: Effects, ctx: EffectCtx = {}): string[] {
+  if (!e) return []
+  const notes = settleMoney(s, e, ctx)
   if (e.stats) {
     for (const k of Object.keys(e.stats) as StatKey[]) {
       s.stats[k] += e.stats[k] ?? 0
@@ -63,6 +77,124 @@ export function applyEffects(s: GameState, e?: Effects): void {
   // 感情只在有伴侣时有意义：保持在 1 以上，分手/离婚由标记决定，年底归零
   if (e.rel?.partner && s.rel.partner > 0) s.rel.partner = clamp(s.rel.partner + e.rel.partner, 1, 100)
   clampStats(s.stats)
+  return notes
+}
+
+// ───────────── 投入与持仓 ─────────────
+
+/** 某资产在某年的价格（年末价）；没有当年数据时取之前最近的一年，更早没有数据时返回 undefined */
+export function priceAt(m: Market, year: number): number | undefined {
+  let best: number | undefined
+  let bestYear = -Infinity
+  for (const [y, p] of Object.entries(m.prices)) {
+    const n = Number(y)
+    if (n <= year && n > bestYear) { best = p; bestYear = n }
+  }
+  return best
+}
+
+/** 年中买卖按“年初价”（上一年年末价）成交；第一年只有年末价时用年末价 */
+export function tradePrice(m: Market, year: number): number | undefined {
+  return priceAt(m, year - 1) ?? priceAt(m, year)
+}
+
+/** 是否持有某资产 */
+export function holds(s: GameState, asset: string): boolean {
+  return (s.positions[asset]?.units ?? 0) > 0
+}
+
+/** 持仓总市值（已计入财富） */
+export function holdingsValue(s: GameState): number {
+  return Object.values(s.positions).reduce((a, p) => a + p.units * p.mark, 0)
+}
+
+/** 可以动用的现金 = 财富 - 持仓市值 */
+export function cashOf(s: GameState): number {
+  return Math.max(0, s.stats.wealth - holdingsValue(s))
+}
+
+/**
+ * 这一次最多能投入多少：成年人可以动用全部现金；
+ * 未成年人只能说动父母拿出一部分（被信任时更多）。再受选项的单笔上限约束。
+ */
+export function stakeRange(s: GameState, stake: Stake): { min: number; max: number; minor: boolean } {
+  const minor = s.age < 18
+  const ratio = !minor ? 1 : s.flags.has('parents-trust') ? TRUSTED_STAKE_RATIO : MINOR_STAKE_RATIO
+  const max = Math.min(stake.max ?? Infinity, cashOf(s) * ratio)
+  return { min: stake.min ?? MIN_STAKE, max: Math.floor(max * 10) / 10, minor }
+}
+
+/** 带投入的选项，钱够不够至少投入一次 */
+export function canStake(s: GameState, c: Choice): boolean {
+  if (!c.stake) return true
+  const r = stakeRange(s, c.stake)
+  return r.max >= r.min
+}
+
+/** 把持仓按新价格重估，差额计入财富，返回差额 */
+function remark(s: GameState, asset: string, price: number): number {
+  const p = s.positions[asset]
+  if (!p) return 0
+  const delta = p.units * (price - p.mark)
+  s.stats.wealth += delta
+  p.mark = price
+  return delta
+}
+
+function settleMoney(s: GameState, e: Effects, ctx: EffectCtx): string[] {
+  const notes: string[] = []
+  const stake = ctx.stake ?? 0
+  const market = (id: string) => ctx.markets?.find((m) => m.id === id)
+  if (e.wealthRatio) {
+    const d = cashOf(s) * e.wealthRatio
+    s.stats.wealth += d
+    if (Math.abs(d) >= 0.01) notes.push(`家底${d >= 0 ? '多了' : '少了'} ${formatWealth(Math.abs(d))}`)
+  }
+  if (e.sell && holds(s, e.sell.asset)) {
+    const m = market(e.sell.asset)
+    const p = s.positions[e.sell.asset]
+    const price = e.sell.at ?? (m && tradePrice(m, s.year)) ?? p.mark
+    remark(s, e.sell.asset, price)
+    const part = clamp(e.sell.part ?? 1, 0, 1)
+    const value = p.units * part * price
+    const cost = p.cost * part
+    p.units -= p.units * part
+    p.cost -= cost
+    if (p.units * p.mark < 0.001) delete s.positions[e.sell.asset]
+    const gain = value - cost
+    notes.push(`卖出${m?.name ?? e.sell.asset}，到手 ${formatWealth(value)}（${gain >= 0 ? '赚' : '亏'} ${formatWealth(Math.abs(gain))}）`)
+  }
+  if (e.buy) {
+    const m = market(e.buy.asset)
+    const price = e.buy.at ?? (m && tradePrice(m, s.year))
+    const amount = e.buy.ratio !== undefined ? cashOf(s) * e.buy.ratio : stake
+    if (m && price && amount > 0) {
+      remark(s, m.id, price)
+      const p = (s.positions[m.id] ??= { units: 0, mark: price, cost: 0 })
+      p.units += amount / price
+      p.cost += amount
+      notes.push(`买入${m.name} ${formatWealth(amount)}（约 ${price} ${m.unit}）`)
+    }
+  }
+  if (e.ret !== undefined && stake > 0) {
+    const d = stake * e.ret
+    s.stats.wealth += d
+    notes.push(`投入 ${formatWealth(stake)}，${e.ret <= -1 ? '血本无归' : d >= 0.005 ? `赚了 ${formatWealth(d)}` : d <= -0.005 ? `亏了 ${formatWealth(-d)}` : '不赚不亏'}`)
+  }
+  return notes
+}
+
+/** 年底按真实价格重估所有持仓，返回账单里的说明 */
+export function revalue(s: GameState, markets: Market[]): string[] {
+  const lines: string[] = []
+  for (const id of Object.keys(s.positions)) {
+    const m = markets.find((x) => x.id === id)
+    const price = m && priceAt(m, s.year)
+    if (!m || !price) continue
+    const d = remark(s, id, price)
+    if (Math.abs(d) >= 0.05) lines.push(`${m.name}持仓 ${d > 0 ? '+' : '-'}${formatWealth(Math.abs(d))}`)
+  }
+  return lines
 }
 
 /** 读取亲人状态（含派生的父母年龄、孩子年龄；没有孩子时 childAge 为 -1） */
@@ -105,6 +237,8 @@ export function meets(s: GameState, c?: Condition): boolean {
   for (const [k, v] of Object.entries(c.worldMax ?? {})) if (worldOf(s, k) > v) return false
   for (const [k, v] of Object.entries(c.relMin ?? {}) as [RelKey, number][]) if (relOf(s, k) < v) return false
   for (const [k, v] of Object.entries(c.relMax ?? {}) as [RelKey, number][]) if (relOf(s, k) > v) return false
+  if (c.holding?.some((a) => !holds(s, a))) return false
+  if (c.notHolding?.some((a) => holds(s, a))) return false
   return true
 }
 
@@ -289,7 +423,7 @@ export function pushLog(s: GameState, title: string, text: string, rarity?: Game
  * 年度账单：成年后每年结算收入与开销（单位万元），写入财富。
  * 18 岁前由父母负担；上大学期间只有少量生活费。
  */
-export function settleYear(s: GameState): YearBill {
+export function settleYear(s: GameState, markets: Market[] = []): YearBill {
   const bill: YearBill = { income: 0, expense: 0, lines: [] }
   const st = s.stats
   const f = s.flags
@@ -309,7 +443,8 @@ export function settleYear(s: GameState): YearBill {
     if (f.has('has-business')) add('生意', 8 + st.fame * 0.15 + st.influence * 0.1)
     if (f.has('side-gig') && !f.has('employed')) add('兼职', 1)
     if (f.has('retired')) add('退休金', 4)
-    if (st.wealth > 0) add('理财收益', st.wealth * 0.02)
+    // 持仓另按市价重估，理财收益只算现金部分
+    if (cashOf(s) > 0) add('理财收益', cashOf(s) * 0.02)
   }
   const student = s.age < 22 && f.has('y1620-in-college')
   const independent = s.age >= 22 || (s.age >= 18 && !student)
@@ -323,6 +458,7 @@ export function settleYear(s: GameState): YearBill {
     if (s.age >= 60) add('医疗', -(s.age - 55) * 0.2)
   }
   st.wealth += bill.income - bill.expense
+  bill.lines.push(...revalue(s, markets))
   if (st.wealth < 0 && independent) {
     st.happiness -= 3
     bill.lines.push('负债压力 快乐-3')
@@ -507,7 +643,10 @@ export function formatWealth(wan: number): string {
   const sign = wan < 0 ? '-' : ''
   if (abs >= 100000000) return `${sign}${(abs / 100000000).toFixed(1)}万亿`
   if (abs >= 10000) return `${sign}${(abs / 10000).toFixed(1)}亿`
-  return `${sign}${Math.round(abs)}万`
+  if (abs >= 10) return `${sign}${Math.round(abs)}万`
+  if (abs >= 1) return `${sign}${Math.round(abs * 10) / 10}万`
+  if (abs > 0) return `${sign}${Math.round(abs * 10000)}元`
+  return '0'
 }
 
 function clamp(n: number, lo: number, hi: number): number {

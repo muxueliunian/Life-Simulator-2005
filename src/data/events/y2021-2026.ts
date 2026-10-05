@@ -30,30 +30,21 @@ export const y2021to2026Events: GameEvent[] = [
     realFact: '比特币价格于 2021 年 11 月创下约 69000 美元的历史高点，2022 年全年大幅下跌至 16000 美元附近；同年 9 月国内相关部门明确虚拟货币相关业务活动属于非法金融活动。依据：通行加密货币市场史料与相关部门公开通知。',
     choices: [
       {
-        text: '把初中那串密码里剩下的币，在高点前卖掉',
-        requires: { flags: ['y1115-btc-hodl'] },
+        text: '把手里的币，在十一月的高点前全部卖掉',
+        requires: { holding: ['btc'] },
         usesMemory: true,
         outcomes: [
-          { tag: 'success', text: '八年前的一千块压岁钱，在六万多美元的高点前翻了几十倍。钱不算多，但你在出租屋里坐了一整晚——这是你和那个十五岁的自己一起赚的。', effects: { stats: { wealth: 7, happiness: 8, influence: 1 }, removeFlags: ['y1115-btc-hodl'] } },
-          { tag: 'misremember', text: '你记错了高点的月份，卖的时候已经回落了不少。但它依然是你这辈子收益率最高的一笔投资。', effects: { stats: { wealth: 4, happiness: 4 }, removeFlags: ['y1115-btc-hodl'] } },
-        ],
-      },
-      {
-        text: '告诉爸爸：“剩下的，十一月前全部卖掉。”',
-        requires: { flags: ['y1115-btc-family'] },
-        usesMemory: true,
-        outcomes: [
-          { tag: 'success', text: '爸爸照做了。那笔当年“就当捐了”的钱，翻了六十多倍。他第一次在你面前哭了。', effects: { stats: { wealth: 300, influence: 6, happiness: 10 }, removeFlags: ['y1115-btc-family'], addFlags: ['family-has-money'] } },
-          { tag: 'misremember', text: '你喊晚了，爸爸卖在了下跌途中。可就算这样，也是当年的几十倍。', effects: { stats: { wealth: 150, influence: 3, happiness: 5 }, removeFlags: ['y1115-btc-family'] } },
+          { tag: 'success', text: '你在六万多美元的高点前清了仓。那天晚上你在出租屋里坐了一整晚——这笔钱，是你和那个十五岁的自己一起赚的。', effects: { stats: { happiness: 8, influence: 2 }, sell: { asset: 'btc', at: 65000 }, removeFlags: ['y1115-btc-hodl', 'y1115-btc-family'] } },
+          { tag: 'misremember', text: '你记错了高点的月份，卖的时候已经回落了不少。', effects: { stats: { happiness: 4 }, sell: { asset: 'btc', at: 50000 }, removeFlags: ['y1115-btc-hodl', 'y1115-btc-family'] } },
         ],
       },
       {
         text: '用积蓄年初进场、十一月前离场',
-        requires: { statMin: { wealth: 10 } },
         usesMemory: true,
+        stake: { max: 1000 },
         outcomes: [
-          { tag: 'success', text: '你踩准了节奏，账户翻了一倍。你没有贪，卖完就卸载了所有交易软件。', effects: { stats: { wealth: 15, happiness: 4 } } },
-          { tag: 'misremember', text: '你把年中那次暴跌当成了顶，割在了低点，又在真正的高点追了回去。', effects: { stats: { wealth: -8, happiness: -6 } } },
+          { tag: 'success', text: '你踩准了节奏，账户翻了一倍多。你没有贪，卖完就卸载了所有交易软件。', effects: { ret: 1.2, stats: { happiness: 4 } } },
+          { tag: 'misremember', text: '你把年中那次暴跌当成了顶，割在了低点，又在真正的高点追了回去。', effects: { ret: -0.3, stats: { happiness: -6 } } },
         ],
       },
       { text: '不碰，这钱不是我该赚的', outcomes: [{ text: '你把注意力放回了工作上。', effects: { stats: { intelligence: 1 } } }] },
@@ -412,12 +403,17 @@ export const y2021to2026Events: GameEvent[] = [
     choices: [
       {
         text: '年初买入，年底卖出',
-        requires: { statMin: { wealth: 20 } },
         usesMemory: true,
+        stake: { max: 2000 },
         outcomes: [
-          { tag: 'success', text: '你在四万多美元时买入，在十万美元的新闻出来那天卖掉。整整一年，你只看了两次行情。', effects: { stats: { wealth: 25, happiness: 4 } } },
-          { tag: 'misremember', text: '你记成了“年初就冲十万”，追在了三月的高点，之后被来回折腾了大半年。', effects: { stats: { wealth: -5, happiness: -4 } } },
+          { tag: 'success', text: '你在四万多美元时买入，在十万美元的新闻出来那天卖掉。整整一年，你只看了两次行情。', effects: { ret: 1.2, stats: { happiness: 4 } } },
+          { tag: 'misremember', text: '你记成了“年初就冲十万”，追在了三月的高点，之后被来回折腾了大半年，最后亏着卖了。', effects: { ret: -0.25, stats: { happiness: -4 } } },
         ],
+      },
+      {
+        text: '等到十万美元的新闻出来，把手里的币卖掉',
+        requires: { holding: ['btc'] },
+        outcomes: [{ text: '新闻推送弹出来的那一刻，你点了卖出。十多年的过山车，到这里下车。', effects: { stats: { happiness: 5 }, sell: { asset: 'btc', at: 100000 } } }],
       },
       { text: '不碰币圈了', outcomes: [{ text: '你把精力放在了本职工作上。', effects: { stats: { intelligence: 1 } } }] },
     ],

@@ -67,13 +67,13 @@ export const aiMainlineEvents: GameEvent[] = [
       {
         text: '拿投资，去东京注册公司',
         outcomes: [
-          { requires: { flags: ['skill-japanese'] }, text: '你的日语派上了用场，签证、注册、租办公室一气呵成。公司在东京开张那天，樱花刚好开了。', effects: { stats: { wealth: 3000, fame: 5, influence: 5, happiness: 6 }, world: { 'ai-player': 15 }, addFlags: ['ai-company', 'ai-japan', 'has-business'] } },
-          { requires: { notFlags: ['skill-japanese'] }, text: '你一边上语言学校一边跑签证，折腾了大半年，总算把公司在东京注册了下来。顺便，你的日语也能应付开会了。', effects: { stats: { wealth: 2800, fame: 5, influence: 4, happiness: 2 }, world: { 'ai-player': 12 }, addFlags: ['ai-company', 'ai-japan', 'has-business', 'skill-japanese'] } },
+          { requires: { flags: ['skill-japanese'] }, text: '你的日语派上了用场，签证、注册、租办公室一气呵成。公司在东京开张那天，樱花刚好开了。', effects: { stats: { wealth: 3000, fame: 5, influence: 5, happiness: 6 }, world: { 'ai-player': 15 }, addFlags: ['ai-company', 'ai-japan', 'has-business'], removeFlags: ['y1620-in-college', 'employed'] } },
+          { requires: { notFlags: ['skill-japanese'] }, text: '你一边上语言学校一边跑签证，折腾了大半年，总算把公司在东京注册了下来。顺便，你的日语也能应付开会了。', effects: { stats: { wealth: 2800, fame: 5, influence: 4, happiness: 2 }, world: { 'ai-player': 12 }, addFlags: ['ai-company', 'ai-japan', 'has-business', 'skill-japanese'], removeFlags: ['y1620-in-college', 'employed'] } },
         ],
       },
       {
         text: '在国内创业',
-        outcomes: [{ text: '你在北京的写字楼里挂上了公司的牌子。融资、招人都很顺，只是你隐约记得，几年后算力会成为大问题。', effects: { stats: { wealth: 3000, fame: 5, influence: 5 }, world: { 'ai-player': 15 }, addFlags: ['ai-company', 'ai-cn-based', 'has-business'] } }],
+        outcomes: [{ text: '你在北京的写字楼里挂上了公司的牌子。融资、招人都很顺，只是你隐约记得，几年后算力会成为大问题。', effects: { stats: { wealth: 3000, fame: 5, influence: 5 }, world: { 'ai-player': 15 }, addFlags: ['ai-company', 'ai-cn-based', 'has-business'], removeFlags: ['y1620-in-college', 'employed'] } }],
       },
       {
         text: '公开回应争议：“我愿意和原团队联合署名”',
@@ -93,18 +93,18 @@ export const aiMainlineEvents: GameEvent[] = [
       {
         text: '日本东京',
         outcomes: [
-          { requires: { flags: ['skill-japanese'] }, text: '你算过账：那边的著作权法对用数据训练模型比较宽松，买高端显卡也不受限，工程师的薪水还比硅谷便宜一大截。签证和注册都很顺，公司在东京开张了。', effects: { stats: { wealth: -30, influence: 3, happiness: 5 }, world: { 'ai-player': 10 }, addFlags: ['ai-company', 'ai-japan', 'has-business'] } },
-          { requires: { notFlags: ['skill-japanese'] }, text: '你先去读了半年语言学校，又被经营管理签证的材料折磨了好几轮，终于在东京拿到了营业执照。房东太太送了你一盒点心，说“加油哦”。', effects: { stats: { wealth: -50, happiness: 2 }, world: { 'ai-player': 8 }, addFlags: ['ai-company', 'ai-japan', 'has-business', 'skill-japanese'] } },
+          { requires: { flags: ['skill-japanese'] }, text: '你算过账：那边的著作权法对用数据训练模型比较宽松，买高端显卡也不受限，工程师的薪水还比硅谷便宜一大截。签证和注册都很顺，公司在东京开张了。', effects: { stats: { wealth: -30, influence: 3, happiness: 5 }, world: { 'ai-player': 10 }, addFlags: ['ai-company', 'ai-japan', 'has-business'], removeFlags: ['y1620-in-college', 'employed'] } },
+          { requires: { notFlags: ['skill-japanese'] }, text: '你先去读了半年语言学校，又被经营管理签证的材料折磨了好几轮，终于在东京拿到了营业执照。房东太太送了你一盒点心，说“加油哦”。', effects: { stats: { wealth: -50, happiness: 2 }, world: { 'ai-player': 8 }, addFlags: ['ai-company', 'ai-japan', 'has-business', 'skill-japanese'], removeFlags: ['y1620-in-college', 'employed'] } },
         ],
       },
       {
         text: '国内',
-        outcomes: [{ text: '你在杭州注册了公司，招人快、落地快，市场就在身边。只是你隐约记得，几年后买高端芯片会越来越难。', effects: { stats: { wealth: -30, influence: 3 }, world: { 'ai-player': 10 }, addFlags: ['ai-company', 'ai-cn-based', 'has-business'] } }],
+        outcomes: [{ text: '你在杭州注册了公司，招人快、落地快，市场就在身边。只是你隐约记得，几年后买高端芯片会越来越难。', effects: { stats: { wealth: -30, influence: 3 }, world: { 'ai-player': 10 }, addFlags: ['ai-company', 'ai-cn-based', 'has-business'], removeFlags: ['y1620-in-college', 'employed'] } }],
       },
       {
         text: '美国硅谷',
         requires: { flags: ['skill-english'] },
-        outcomes: [{ text: '你在湾区的车库里开了张——真的是车库，月租贵得吓人。离投资人很近，离家很远。', effects: { stats: { wealth: -60, influence: 4, happiness: -2 }, world: { 'ai-player': 10 }, addFlags: ['ai-company', 'ai-us', 'has-business'] } }],
+        outcomes: [{ text: '你在湾区的车库里开了张——真的是车库，月租贵得吓人。离投资人很近，离家很远。', effects: { stats: { wealth: -60, influence: 4, happiness: -2 }, world: { 'ai-player': 10 }, addFlags: ['ai-company', 'ai-us', 'has-business'], removeFlags: ['y1620-in-college', 'employed'] } }],
       },
       { text: '再等等，时机还不成熟', outcomes: [{ text: '你把计划书锁进了抽屉。投资人说：“想好了随时找我。”', effects: { stats: { happiness: -1 }, removeFlags: ['ai-candidate'] } }] },
     ],

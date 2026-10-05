@@ -166,3 +166,10 @@ body { margin:0; background:var(--bg); color:var(--fg); font-family: system-ui, 
 .family { margin-top:10px; font-size:13px; color:var(--muted); }
 .family p { margin:2px 0; }
 @media (max-width: 720px) { .family { margin-top:4px; font-size:11px; display:flex; flex-wrap:wrap; gap:0 10px; } }
+
+/* 投入多少 */
+.stake .stake-amount { font-size:28px; font-weight:700; color:var(--gold); margin:8px 0; }
+.stake input[type=range] { width:100%; accent-color:var(--gold); }
+.stake .stake-quick { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 12px; }
+.stake .stake-quick .btn { margin-top:0; }
+.holdings { color:var(--gold); }
